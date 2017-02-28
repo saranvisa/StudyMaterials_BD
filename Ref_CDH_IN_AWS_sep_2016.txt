@@ -1,8 +1,3 @@
-beeline -u "jdbc:hive2://ec2-34-193-195-87.compute-1.amazonaws.com:10000/prod;principal=hive/ec2-34-193-195-87.compute-1.amazonaws.com@AWS.COM"
-beeline -u "jdbc:hive2://ec2-34-193-195-87.compute-1.amazonaws.com:10000/;principal=hive/ec2-34-193-195-87.compute-1.amazonaws.com@AWS.COM"
-!connect jdbc:hive2://ec2-34-194-173-26.compute-1.amazonaws.com:10000/default;principal=hive/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM
-
-
 ------- Users
 1. ec2-user - default user
 2. kumar - pwd: hadoop2
@@ -10,39 +5,9 @@ beeline -u "jdbc:hive2://ec2-34-193-195-87.compute-1.amazonaws.com:10000/;princi
 4. mysql - hadoop1
 
 ----Before installation
-1.	Finalize the RedHat version  									** RedHat 6.5 **
+1.	Finalize the RedHat version  					** RedHat 6.5 **
 2.	Identify the corresponding MySQL version suitable for Redhat    ** mysql57-community-release-el6-9.noarch.rpm **
-3.	Identify the corresponding CDH version suitable for MySQL		** CDH 5.7.0 **
-
---------- Public IPs
-10.0.0.203 ec2-34-194-113-157.compute-1.amazonaws.com
-10.0.0.184 ec2-34-193-195-87.compute-1.amazonaws.com
-10.0.0.163 ec2-34-193-8-64.compute-1.amazonaws.com
-10.0.0.173 ec2-34-193-203-57.compute-1.amazonaws.com
-
-ping ec2-34-193-195-87.compute-1.amazonaws.com
-ping ec2-34-193-8-64.compute-1.amazonaws.com
-ping ec2-34-193-203-57.compute-1.amazonaws.com
-
-
-** First time login with ec2-user
-Login > #ssh -i "keypair_sep_2016.pem" ec2-user@ec2-34-194-113-157.compute-1.amazonaws.com 
-Login > #ssh -i "keypair_sep_2016.pem" ec2-user@ec2-34-194-173-26.compute-1.amazonaws.com 
-Login > #ssh -i "keypair_sep_2016.pem" ec2-user@ec2-34-193-8-64.compute-1.amazonaws.com
-Login > #ssh -i "keypair_sep_2016.pem" ec2-user@ec2-34-193-203-57.compute-1.amazonaws.com
-
-
-
-
-** Second time onward login to Kumar
-ssh -i "keypair_sep_2016.pem" kumar@ec2-34-194-113-157.compute-1.amazonaws.com 
-ssh -i "keypair_sep_2016.pem" kumar@ec2-34-193-195-87.compute-1.amazonaws.com
-ssh -i "keypair_sep_2016.pem" kumar@ec2-34-193-211-19.compute-1.amazonaws.com
-ssh -i "keypair_sep_2016.pem" kumar@ec2-34-193-203-57.compute-1.amazonaws.com
-
-
-Login > ssh  kumar@ec2-34-193-211-19.compute-1.amazonaws.com
-Login > ssh  kumar@ec2-34-193-203-57.compute-1.amazonaws.com
+3.	Identify the corresponding CDH version suitable for MySQL	** CDH 5.7.0 **
 
 
 ------------ set password for root
