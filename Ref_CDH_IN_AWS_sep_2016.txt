@@ -1,4 +1,4 @@
-------- Users
+------- Usr
 1. ec2-user - default user
 2. kumar - pwd: hadoop2
 3. root - pwd: hadoop1
