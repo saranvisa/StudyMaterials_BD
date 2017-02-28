@@ -1,0 +1,12 @@
+LOGIN
+=====
+$ pyspark    ## launch python on YARN mode by default
+$ exit()
+
+$ pyspark --master local  ## To launch in local mode
+
+MONITOR SPARK
+=============
+1. Get the IP address of the Resource Manager (Port 8088) & Go to resource Manager URL (CM/Ambari -> Yarn -> Quicklink UI)
+
+Ex: http://rm01.itversity.com:8088/cluster
