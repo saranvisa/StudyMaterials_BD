@@ -1,0 +1,16 @@
+# Store the query in HDFS and call it from spark-sql
+# Create a file with a simple query
+vi query_emp_hive.sql
+select * from qa.emp;
+
+# Put the file to HDFS location
+hdfs://k12bdacluster-ns/user/saranvisa/query_emp_hive.sql
+
+# Call the sql using below command from HDFS
+spark-sql --conf spark.executor.memory=1g \
+--conf spark.akka.frameSize=1024 \
+--conf spark.driver.memory=10g \
+--conf spark.dynamicAllocation.initialExecutors=10 \
+--conf spark.dynamicAllocation.maxExecutors=10 \
+--conf spark.executor.extraJavaOptions="-XX:MaxPermSize=1024M" \
+--conf spark.kryoserializer.buffer.max=1024m -f hdfs://nn01.itversity.com/user/saranvisa/query_emp_hive.sql
