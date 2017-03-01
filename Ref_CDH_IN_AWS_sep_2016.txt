@@ -1,3 +1,6 @@
+Using Ubuntu in AWS
+http://gethue.com/hadoop-tutorial-how-to-create-a-real-hadoop-cluster-in-10-minutes/
+
 ------- Usr
 1. ec2-user - default user
 2. kumar - pwd: hadoop2
