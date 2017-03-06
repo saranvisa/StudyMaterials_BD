@@ -1,12 +1,238 @@
-LOGIN
-=====
-$ pyspark    ## launch python on YARN mode by default
-$ exit()
 
-$ pyspark --master local  ## To launch in local mode
-
-MONITOR SPARK
+TIPS: Database
 =============
-1. Get the IP address of the Resource Manager (Port 8088) & Go to resource Manager URL (CM/Ambari -> Yarn -> Quicklink UI)
+1. Use SQLContext, HiveContext to connect to Hive/Impala which is available in HDFS
+2. Use JDBC Connection to connect to Remote Databases like Oracle, Teradata, etc
+3. 
+
+
+TIPS: Scala vs Python
+======================
+1. Auto Fill: Scala supports  where as Python doesn't
+2. Scala variable/RDD	: requires prefix with val/var
+3. Python variable/RDD	: doesn't require to prefix
+4. sc: Spark Context, will be automatically localled by launching spark-shell or pyspark
+5. Scope of loops: Scala uses curly brackets {}
+6. Scope of loops: Python doesn't use {} instead use : it will go to next line, give a space and type the commands.
+   Note: We can use any number of space. Ex: if we use two spaces, give two spaces for all the upcoming lines, etc
+   Ex: 	>>> for rec in empRDD.collect():
+		...   print(rec)
+		...
+7. Login to spark-shell (or) pyspark session will take some resources. So before submit any major job, check all the active sessions and close unwanted, otherwise it may go running out of memory issue
+8. pyspark is module and SparkContext, SparkConf are classes from the below import statement
+	from pyspark import SparkContext, SparkConf
+9. 	
+		
+TIPS: Certification
+====================
+1. If there is no Condition to use Context, use HiveContext/SQLContext, it will minimize the work
+
+##################################################################################################### Chapter 1 ########
+Ref: https://www.youtube.com/watch?v=EGQjqcOIjIM&index=31&list=PLf0swTFhTI8rJvGpOp-LujOcpk-Rlz-yE
+
+TOPICS:
+=======
+1. LOGIN & LOGOUT
+2. MONITOR SPARK
+3. HIVE CONTEXT & SQL CONTEXT
+4. CREATE RDD & CONNECT TO HIVE
+5. CONNECT TO REMOTE DATABASE (Ex: MySQL)
+
+1. LOGIN & LOGOUT
+=================
+$ pyspark    				## launch python on YARN mode by default
+$ pyspark --master local  	## To launch in LOCAL mode
+$ exit() (or) Cntrl + D  	## Logout
+
+
+2. MONITOR SPARK
+================
+1. YARN MODE: Get the IP address of the Resource Manager (OR) Go to resource Manager URL (CM/Ambari -> Yarn -> Quicklink UI)
+   Yarn Mode: Port 8088
 
 Ex: http://rm01.itversity.com:8088/cluster
+
+2. LOCAL MODE: Get the IP address of Spark History Server (or) Go to CM/Ambari -> Spark -> Quicklink UI
+   Spark History Server: Port 18080
+   
+Ex: http://gw01.itversity.com:18080/
+
+
+3. HIVE CONTEXT & SQL CONTEXT
+=============================
+from pyspark.sql import HiveContext
+from pyspark.sql import SQLContext
+
+4. CREATE RDD & CONNECT TO HIVE
+=============================
+from pyspark.sql import HiveContext
+from pyspark.sql import SQLContext
+sqlContext = HiveContext(sc)
+empRDD = sqlContext.sql("select * from qa.emp")
+>>> for rec in empRDD.collect():
+		...   print(rec)
+		...
+
+5. CONNECT TO REMOTE DATABASE (Ex: MySQL)
+======================================
+# Either run the pyspark with "--driver-class-path"	or set environment variable with os.environ
+# Pre-request: Identify the connector jar, usually the mysql-connector-java is available at "/usr/share/java/"
+# Ex: "/usr/share/java/mysql-connector-java-5.1.40-bin.jar"
+# If you don't know the location then Find it as sudo find . -name "mysql-connector-java*.jar" -print
+
+pyspark --driver-class-path /usr/share/java/mysql-connector-java.jar		## While login to python
+os.environ['SPARK_CLASSPATH'] = "/usr/share/java/mysql-connector-java.jar"  ## After Login to python
+
+>>> os.environ['SPARK_CLASSPATH'] = "/usr/share/java/mysql-connector-java.jar"
+
+sqlContext = SQLContext(sc)
+jdbcurl = "jdbc:mysql://nn01.itversity.com:3306/retail_db?user=retail_dba&password=itversity"
+# LOAD Command in SQLContext 
+df = sqlContext.load(source="jdbc",url=jdbcurl,dbtable="departments")
+
+for rec in df.collect():
+  print(rec)
+  
+df.count()
+
+
+
+##################################################################################################### Chapter 2 ########
+
+https://www.youtube.com/watch?v=Quk2QV8N0vo&list=PLf0swTFhTI8rJvGpOp-LujOcpk-Rlz-yE&index=32
+
+TOPICS:
+=======
+
+
+1. DEVELOPING A SIMPLE PYTHON BASED APPLICATION FOR SPARK TO SAVE HDFS FILE WITH py EXTENSION
+================================================================================================
+vi saveFile.py   
+# This file will have the below code
+
+from pyspark import SparkContext, SparkConf    ## NOT accepting pyspark.sql
+
+## While Monitor the job, App Name will help us to identify this job
+conf = SparkConf().setAppName("pyspark_kumar")  
+sc = SparkContext(conf=conf)
+dataRDD = sc.textFile("/user/saranvisa/sqoop_import/orders") ## orders is a direcory which has many files
+for rec in dataRDD.collect():
+  print(rec)
+  
+dataRDD.saveAsTextFile("/user/saranvisa/sqoop_import/orders_py") ## make sure the target dir is not exists
+
+## save the above content in a file and exit and submit the spark-shell
+## Submitting pyspark applications
+$ spark-submit --master yarn saveFile.py  ## To Run in YARN MODE
+$ spark-submit --master local saveFile.py  ## To Run in LOCAL MODE
+
+## Check the target direcory
+hdfs dfs -ls /user/saranvisa/sqoop_import/orders_py
+
+##################################################################################################### Chapter 3 ########
+
+http://www.itversity.com/topic/move-data-between-hdfs-and-spark-pyspark/
+
+TOPICS: 
+=======
+1. LOAD DATA FROM HDFS AND STORING RESULT BACK TO HDFS USING SPARK
+2. LOAD DATA/STORING DATA: TEXT FILE
+3. PRE-REQUEST: ARRAY, SPLIT for SEQUENCE FILE
+4. LOAD DATA/STORING DATA: SEQUENCE FILE
+
+1. LOAD DATA FROM HDFS AND STORING RESULT BACK TO HDFS USING SPARK
+=================================================================== 
+>>> from pyspark import SparkContext
+>>> dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/deptfile.txt")
+>>> for rec in dataRDD.collect():
+...   print(rec)
+...
+>>> print(dataRDD.count())
+
+## HDFS path - save as txt and json
+>>> dataRDD.saveAsTextFile("/user/saranvisa/scala-sbt-input/deptfile1.txt")
+>>> dataRDD.saveAsTextFile("/user/saranvisa/scala-sbt-input/deptfile2.json")
+
+## FULLY QUALIFIED Path
+>>> dataRDD.saveAsTextFile("hdfs://nn01.itversity.com:8020/user/saranvisa/scala-sbt-input/deptfile3.txt")
+
+## Fully qualified HDFS Path
+
+2. LOAD DATA/STORING DATA: TEXT FILE
+=====================================
+>>> from pyspark import SparkContext
+>>> dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/deptfile.txt")
+
+## By default, spark point to HDFS. Prefix with file:/// to point to local. 
+>>> dataRDD.saveAsTextFile("file:///home/saranvisa/deptfile_sprk1")
+>>> dataRDD1 = dataRDD.saveAsTextFile("file:///home/saranvisa/deptfile_sprk1")
+
+>>> for rec in dataRDD1.collect():
+...   print(rec)
+
+3. PRE-REQUEST: ARRAY, SPLIT for SEQUENCE FILE
+==============================================
+>pyspark
+>>> str = "stdid,stdname,mark1,mark2,mark3"
+
+## The Split command, build an array. In Python, array is represented with squar bracket []
+>>> str.split(",")
+['stdid', 'stdname', 'mark1', 'mark2', 'mark3']
+
+## Array starts from [0]
+## To access the specific element from the array, you can use [0] or [1], etc as follows
+>>> str.split(",")[0]
+'stdid'
+>>> str.split(",")[1]
+'stdname'
+>>> str.split(",")[3]
+'mark2'
+
+## In addition to split you can also speciy how to "group the values into number of elements"
+## Specify 0 to group all values into single group
+>>> str.split(",",0)
+['stdid,stdname,mark1,mark2,mark3']
+## Specify 1 to group first element in one group and rest in other group
+>>> str.split(",",1)
+['stdid', 'stdname,mark1,mark2,mark3']
+## Specify 2 to group first two elements in two different group and rest in other group
+>>> str.split(",",2)
+['stdid', 'stdname', 'mark1,mark2,mark3']
+
+## To get a particular group of elements
+>>> str.split(",",1)
+['stdid', 'stdname,mark1,mark2,mark3']
+>>> str.split(",",1)[0]
+'stdid'
+>>> str.split(",",1)[1]
+'stdname,mark1,mark2,mark3'
+>>> str.split(",",0)
+['stdid,stdname,mark1,mark2,mark3']
+>>> str.split(",",0)[0]
+'stdid,stdname,mark1,mark2,mark3'
+
+
+4. LOAD DATA/STORING DATA: SEQUENCE FILE
+========================================
+http://www.itversity.com/topic/move-data-between-hdfs-and-spark-pyspark/
+
+## ABOUT SEQUENCE FILE: 
+1. Structure of data will be metadata driven instead of considering each line as record
+2. Metadata will be in the form of key & value
+3. Key Value will take little more extra space than the original data as it needs to store metadata
+
+## PRE-REQUEST: before read you need to write the file as sequence file
+## PYTHON: LAMBDA FUNCTION: 
+## Ex: dataRDD.map(lambda x: (None, x)): 
+## a. LAMBDA is an ananymous function which can return the expression WITHOUT NAMING the function
+## b. each record will be passed to this lambda function and it will apply the transformation (None, x)
+## c. Lambda ananymous function is available inside the map function/transformation
+
+>>> from pyspark import SparkContext
+>>> dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/deptfile.txt")
+
+## Save as sequence file
+>>> dataRDD.map(lambda x:(None, x)).saveAsSequenceFile("/user/saranvisa/scala-sbt-input/deptSeq")
+>>> dataRDD.map(lambda x: tuple(x.split(",",1))).saveAsSequenceFile("/user/saranvisa/scala-sbt-input/deptSeq")
+
+
