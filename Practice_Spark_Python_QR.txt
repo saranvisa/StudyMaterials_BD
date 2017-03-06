@@ -47,12 +47,12 @@ $ exit() (or) Cntrl + D  	## Logout
 
 2. MONITOR SPARK
 ================
-1. YARN MODE: Get the IP address of the Resource Manager (OR) Go to resource Manager URL (CM/Ambari -> Yarn -> Quicklink UI)
+1. YARN MODE: Get the Namespace(Namenode) of the Resource Manager (OR) Go to resource Manager URL (CM/Ambari -> Yarn -> Quicklink UI)
    Yarn Mode: Port 8088
 
 Ex: http://rm01.itversity.com:8088/cluster
 
-2. LOCAL MODE: Get the IP address of Spark History Server (or) Go to CM/Ambari -> Spark -> Quicklink UI
+2. LOCAL MODE: Get the Namespace(Namenode) of Spark History Server (or) Go to CM/Ambari -> Spark -> Quicklink UI
    Spark History Server: Port 18080
    
 Ex: http://gw01.itversity.com:18080/
