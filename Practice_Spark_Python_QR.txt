@@ -1,31 +1,80 @@
+TIPS: General
+==============
+1. sc: Spark Context, will be automatically localled by launching spark-shell or pyspark
+2. Login to spark-shell (or) pyspark session will take some resources. So before submit any major job, check all the active sessions and close unwanted, otherwise it may go running out of memory issue
+3. SparkContext and SparkConf are classes in pyspark module & Scala module
 
 TIPS: Database
-=============
-1. Use SQLContext, HiveContext to connect to Hive/Impala which is available in HDFS
-2. Use JDBC Connection to connect to Remote Databases like Oracle, Teradata, etc
-3. 
+==============
+1. Pre-request to connect to Hive. Spark Conf path should have either hive-site.xml or should have a soft link to hive Conf path
+/etc/spark/conf
+/etc/hive/conf/hive-site.xml
+2. Use SQLContext, HiveContext to connect to Hive/Impala which is available in HDFS
+3. Use JDBC Connection to connect to Remote Databases like Oracle, Teradata, etc
+4. Use pyspark.sql to import HiveContext & SQLContext as follows: 
+	from pyspark.sql 	import HiveContext				## pyspark.sql
+	from pyspark 		import SparkContext, SparkConf 	## pyspark   
 
 
 TIPS: Scala vs Python
 ======================
 1. Auto Fill: Scala supports  where as Python doesn't
 2. Scala variable/RDD	: requires prefix with val/var
-3. Python variable/RDD	: doesn't require to prefix
-4. sc: Spark Context, will be automatically localled by launching spark-shell or pyspark
-5. Scope of loops: Scala uses curly brackets {}
-6. Scope of loops: Python doesn't use {} instead use : it will go to next line, give a space and type the commands.
+   Python variable/RDD	: doesn't require to prefix
+3. Scope of loops: Scala uses curly brackets {}
+   Scope of loops: Python doesn't use {} instead use : it will go to next line, give a space and type the commands.
    Note: We can use any number of space. Ex: if we use two spaces, give two spaces for all the upcoming lines, etc
    Ex: 	>>> for rec in empRDD.collect():
 		...   print(rec)
 		...
-7. Login to spark-shell (or) pyspark session will take some resources. So before submit any major job, check all the active sessions and close unwanted, otherwise it may go running out of memory issue
-8. pyspark is module and SparkContext, SparkConf are classes from the below import statement
-	from pyspark import SparkContext, SparkConf
-9. 	
+4. Python Importing:	from pyspark import SparkContext, SparkConf
+   Scala  Importing: 	import org.apache.spark.sql.hive.HiveContext
+   
+5. Python: To Read a sequence file, It is optional to specify the DATATYPE of KEY & VALUE 
+   Scala : To Read a sequence file, It is mandatory to specify the DATATYPE of KEY & VALUE
+6.   
+
+TIPS: RDD Connection to textFile, jsonFile, HiveContext, SQLContext, SparkContext(sc)
+=====================================================================================
+textFile & SparkContext
+=======================
+from pyspark import SparkContext
+dataRDD = sc.textFile("/user/saranvisa/sqoop_import/orders") ## orders is a direcory which has many files
+
+jsonFile & SQLContext
+=====================
+from pyspark  import SQLContext
+sqlContext = SQLContext(sc)
+empJSON = sqlContext.jsonFile("/user/saranvisa/scala-sbt-input/empjson.json")
+empJSON.registerTempTable("empjson")
+		
+HiveContext 
+===========
+>>> from pyspark.sql import HiveContext
+>>> sqlContext = HiveContext(sc)
+>>> dataRDD = sqlContext.sql("select * from qa.emp")
+
 		
 TIPS: Certification
 ====================
 1. If there is no Condition to use Context, use HiveContext/SQLContext, it will minimize the work
+2. The sort question is very slow, so When you running one question, you can write next question at sublime
+3. 120 mins for 10 question, first 10 mins to review all the questions, then 100 mins to attend all questions (each 10 mins)
+	10 mins - review
+	100 mins - 10 questinos (10 mins each)
+	10 mins - backup
+4. During revision, make sure each questions takes less than 5 to 10 mins	
+5. You will only use ctrl c/v at sublime. Use ctrl +shift +c/v at terminal
+6. For HDFS result validation, use "hdfs dfs -tail /user/sksivanandan/test1.txt"
+7. Just learn how to execute the script
+	it is actually.... go to that particular folder >     ./run.sh
+8. 	There wont be complex questions, learn to do basic operations like map,join,sortByKey,reduceByKey,filter,forEach,for,count & collect...
+	do multiple exercises on that becoz, there are parenthesis difference between python and scala... Its better try in cloudera VM rather than trying in plain vanilla hadoop or hortonworks @malavec
+9. 	sqoop questions taking more execution time and less time for spark & hive
+10. Did u use any IDE or managed with Sublime?
+
+
+
 
 ##################################################################################################### Chapter 1 ########
 Ref: https://www.youtube.com/watch?v=EGQjqcOIjIM&index=31&list=PLf0swTFhTI8rJvGpOp-LujOcpk-Rlz-yE
@@ -110,7 +159,7 @@ TOPICS:
 vi saveFile.py   
 # This file will have the below code
 
-from pyspark import SparkContext, SparkConf    ## NOT accepting pyspark.sql
+from pyspark import SparkContext, SparkConf    
 
 ## While Monitor the job, App Name will help us to identify this job
 conf = SparkConf().setAppName("pyspark_kumar")  
@@ -135,13 +184,18 @@ http://www.itversity.com/topic/move-data-between-hdfs-and-spark-pyspark/
 
 TOPICS: 
 =======
-1. LOAD DATA FROM HDFS AND STORING RESULT BACK TO HDFS USING SPARK
+1. LOAD DATA FROM HDFS AND STORING RESULT BACK TO HDFS USING SPARK (Text, Sequence, JSON, etc)
 2. LOAD DATA/STORING DATA: TEXT FILE
-3. PRE-REQUEST: ARRAY, SPLIT for SEQUENCE FILE
-4. LOAD DATA/STORING DATA: SEQUENCE FILE
+3. PRE-REQUEST: for SEQUENCE FILE (ARRAY, SPLIT)
+4. LOAD DATA/STORING DATA: WRITE SEQUENCE FILE
+5. LOAD DATA/STORING DATA: READ  SEQUENCE FILE
+6. saveAsNewAPIHadoopFile FOR SAVING DATA IN HDFS WITH FILE FORMAT OF OUR CHOICE (eg: sequence file) -- TBD
+7. LOAD DATA/STORING DATA: JSON FILE
 
-1. LOAD DATA FROM HDFS AND STORING RESULT BACK TO HDFS USING SPARK
-=================================================================== 
+
+
+1. LOAD DATA FROM HDFS AND STORING RESULT BACK TO HDFS USING SPARK (Text, Sequence, JSON, etc)
+==============================================================================================
 >>> from pyspark import SparkContext
 >>> dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/deptfile.txt")
 >>> for rec in dataRDD.collect():
@@ -170,8 +224,8 @@ TOPICS:
 >>> for rec in dataRDD1.collect():
 ...   print(rec)
 
-3. PRE-REQUEST: ARRAY, SPLIT for SEQUENCE FILE
-==============================================
+3. PRE-REQUEST: for SEQUENCE FILE (ARRAY, SPLIT)
+===============================================
 >pyspark
 >>> str = "stdid,stdname,mark1,mark2,mark3"
 
@@ -212,8 +266,8 @@ TOPICS:
 'stdid,stdname,mark1,mark2,mark3'
 
 
-4. LOAD DATA/STORING DATA: SEQUENCE FILE
-========================================
+4. LOAD DATA/STORING DATA: WRITE SEQUENCE FILE
+==============================================
 http://www.itversity.com/topic/move-data-between-hdfs-and-spark-pyspark/
 
 ## ABOUT SEQUENCE FILE: 
@@ -231,8 +285,94 @@ http://www.itversity.com/topic/move-data-between-hdfs-and-spark-pyspark/
 >>> from pyspark import SparkContext
 >>> dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/deptfile.txt")
 
-## Save as sequence file
+## Save as sequence file. It contains ascii
 >>> dataRDD.map(lambda x:(None, x)).saveAsSequenceFile("/user/saranvisa/scala-sbt-input/deptSeq")
 >>> dataRDD.map(lambda x: tuple(x.split(",",1))).saveAsSequenceFile("/user/saranvisa/scala-sbt-input/deptSeq")
 
+## To get the sequence data from RDD before save
+>>> for rec in dataRDD.map(lambda x:tuple(x.split(",",1))).collect():
+>>>   print(rec)
+
+(u'deptid', u'deptname')
+(u'10', u'HumanResource')
+(u'20', u'InformationTechnology')
+(u'30', u'Hardware')
+(u'40', u'Telephone')
+(u'50', u'Marketting')
+(u'60', u'Security')
+(u'70', u'Management')
+
+5. LOAD DATA/STORING DATA: READ  SEQUENCE FILE
+==============================================
+## PRE-REQUEST: before read you need to write the file as sequence file
+## TWO DIFFERENT TYPES
+## a. Python: To Read a sequence file, It is optional to specify the DATATYPE of KEY & VALUE 
+## b. Scala : To Read a sequence file, It is mandatory to specify the DATATYPE of KEY & VALUE
+
+## To read data from sequence files WITHOUT DATATYPE of KEY & VALUE 
+>>> path="/user/saranvisa/scala-sbt-input/deptSeq"
+>>> dataSeqRDD = sc.sequenceFile(path)
+>>> for rec in dataSeqRDD.collect():
+>>>   print(rec)
+
+## To read data from sequence files WITH DATATYPE of KEY & VALUE 
+## KEY = "org.apache.hadoop.io.IntWritable"
+## VALUE = "org.apache.hadoop.io.Text"
+>>> dataSeqRDD1 = sc.sequenceFile(path,"org.apache.hadoop.io.IntWritable","org.apache.hadoop.io.Text")
+>>> for rec1 in dataSeqRDD1.collect():
+>>>   print(rec1)
+
+6. saveAsNewAPIHadoopFile FOR SAVING DATA IN HDFS WITH FILE FORMAT OF OUR CHOICE (eg: sequence file) -- TBD
+============================================================================================================
+
+## It will accept 4 parameters
+
+>>> path="/user/cloudera/pyspark/departmentsSeq"
+
+>>> dataRDD.map(lambda x: tuple(x.split(",", 1))).saveAsNewAPIHadoopFile(path,"org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat",keyClass="org.apache.hadoop.io.Text",valueClass="org.apache.hadoop.io.Text")
+
+##################################################################################################### Chapter 4 ########
+http://www.itversity.com/topic/move-data-between-hdfs-and-spark-pyspark/
+https://www.youtube.com/watch?v=EwJTEWF6IGM
+
+TOPICS: 
+=======
+1. LOAD DATA/STORING DATA: HIVE TABLE
+2. LOAD DATA/STORING DATA: JSON FILE
+
+## To get the table data from Hive, Import HiveContext
+>>> from pyspark.sql import HiveContext
+>>> sqlContext = HiveContext(sc)
+>>> dataRDD = sqlContext.sql("select * from qa.emp")
+>>> for rec in dataRDD.collect():
+>>>   print(rec)
+
+## Two options to print a selected column from a table
+## Option 1: select the column in the query itself
+>>> dataRDD = sqlContext.sql("select empid from qa.emp")
+>>> for rec in dataRDD.collect():
+>>>   print(rec)
+## Option2: select a column from RDD
+>>> dataRDD = sqlContext.sql("select * from qa.emp")
+>>> for rec in dataRDD.collect():
+>>>    print(rec.empid)
+
+## To create a table via HiveContext
+sqlContext.sql("create table qa.emp1 as select * from qa.emp")
+
+## Create a simple JSON file and move to HDFS
+{"empid":10, "empname":"kumar"}
+{"empid":20, "empname":"James"}
+{"empid":30, "empname":"Sam"}
+{"empid":40, "empname":"Dinesh"}
+{"empid":50, "empname":"Dhiya"}
+{"empid":60, "empname":"Sachein"}
+{"empid":70, "empname":"Sumi"}
+{"empid":80, "empname":"Johnson"}
+
+## LOAD JSON file into RDD
+from pyspark  import SQLContext
+sqlContext = SQLContext(sc)
+empJSON = sqlContext.jsonFile("/user/saranvisa/scala-sbt-input/empjson.json")
+empJSON.registerTempTable("empjson")
 
