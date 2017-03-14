@@ -13,14 +13,14 @@
 # Put the file to HDFS location
 hdfs://k12bdacluster-ns/user/saranvisa/query_emp_hive.sql
 
-# Call the sql using below command from HDFS - K12
+# Call the sql using below command from HDFS - syntax
 spark-sql --conf spark.executor.memory=1g \
 --conf spark.akka.frameSize=1024 \
 --conf spark.driver.memory=10g \
 --conf spark.dynamicAllocation.initialExecutors=10 \
 --conf spark.dynamicAllocation.maxExecutors=10 \
 --conf spark.executor.extraJavaOptions="-XX:MaxPermSize=1024M" \
---conf spark.kryoserializer.buffer.max=1024m -f hdfs://k12bdacluster-ns/user/sksivanandan/test_hive.sql
+--conf spark.kryoserializer.buffer.max=1024m -f hdfs://namespacename/user/sksivanandan/test_hive.sql
 
 # Call the sql using below command from HDFS - Itversity
 spark-sql --conf spark.executor.memory=1g \
