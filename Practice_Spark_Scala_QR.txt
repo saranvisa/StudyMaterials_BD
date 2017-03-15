@@ -1,0 +1,21 @@
+Topics:
+1. Setting up Environment and using the lab
+	a. Setup Scala, sbt and Spark
+	b. Setup Eclipse or Intellij IDE with sbt
+2. Programming using Scala
+	a. Scala REPL
+	b. Basic programming constructs
+	c. Object Oriented Concepts
+	d. Develop Scala applications using JDBC and other 3rd party tools
+	e. Develop using IntelliJ and build using sbt
+	f. Collections
+3. Core Spark
+	a. Spark Architecture
+	b. Spark Configuration and Spark Context
+	c. Resilient Distributed Datasets
+	d. Transformations
+	e. Actions
+4. Data Frames and Spark SQL
+	a. Data Frames and Data Frame Operations
+	b. Spark native SQL
+	c. Spark Hive SQL
