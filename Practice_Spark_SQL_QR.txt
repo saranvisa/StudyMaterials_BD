@@ -1,0 +1,35 @@
+# How to Store the query in HDFS and call it from spark-sql
+
+## Pre-request: You should have the binary "spark-sql" in the below default path
+./opt/cloudera/parcels/CDH-5.3.0-1.cdh5.3.0.p0.30/lib/spark/bin/spark-sql
+./opt/cloudera/parcels/CDH-5.4.0-1.cdh5.4.0.p0.27/lib/spark/bin/spark-sql
+
+/usr/hdp/2.5.0.0-1245/spark/lib/spark-assembly-1.6.2.2.5.0.0-1245-hadoop2.7.3.2.5.0.0-1245.jar
+
+# Create a file with a simple query
+# Example: vi query_emp_hive.sql
+			select * from qa.emp;
+
+# Put the file to HDFS location
+hdfs://k12bdacluster-ns/user/saranvisa/query_emp_hive.sql
+
+# Call the sql using below command from HDFS - K12
+spark-sql --conf spark.executor.memory=1g \
+--conf spark.akka.frameSize=1024 \
+--conf spark.driver.memory=10g \
+--conf spark.dynamicAllocation.initialExecutors=10 \
+--conf spark.dynamicAllocation.maxExecutors=10 \
+--conf spark.executor.extraJavaOptions="-XX:MaxPermSize=1024M" \
+--conf spark.kryoserializer.buffer.max=1024m -f hdfs://k12bdacluster-ns/user/sksivanandan/test_hive.sql
+
+# Call the sql using below command from HDFS - Itversity
+spark-sql --conf spark.executor.memory=1g \
+--conf spark.akka.frameSize=1024 \
+--conf spark.driver.memory=10g \
+--conf spark.dynamicAllocation.initialExecutors=10 \
+--conf spark.dynamicAllocation.maxExecutors=10 \
+--conf spark.executor.extraJavaOptions="-XX:MaxPermSize=1024M" \
+--conf spark.kryoserializer.buffer.max=1024m -f hdfs://nn01.itversity.com/user/saranvisa/query_emp_hive.sql
+
+
+
