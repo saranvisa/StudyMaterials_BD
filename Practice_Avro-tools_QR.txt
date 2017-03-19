@@ -1,0 +1,397 @@
+## Avro-tools
+
+https://avro.apache.org/docs/1.8.1/index.html
+https://www.tutorialspoint.com/avro/avro_quick_guide.htm
+
+
+###############################################################	INDEX ######################
+#### TIPS: 
+#### Chapter 1: 
+		#### Topic: Extract an Avro schema from a set of datafiles using avro-tools
+#### Chapter 2: 
+		#### Topic: Create a table in the Hive Metastore using Avro file format and an external schema file
+#### Chapter 3: 
+		#### Topic: Easy way to create a hive table as AVRO format
+		#### Topic: Improve query performance by creating partitioned tables in the hive metastore  (using avro file format)
+#### Chapter 4: 
+		#### Topic: Evolve an Avro schema by changing JSON files
+
+
+=============
+## Tips:
+1. Internally avro will store data in JSON format + binary format
+2. Impala can read the avro data but not able to write. Overall Impala will NOT support avro. Need to check the latest version. 
+
+## Avro Tools
+$ avro-tools   ## Type this command in CLI, it will show avilable options like follows
+
+Available tools:
+          cat  extracts samples from files
+      compile  Generates Java code for the given schema.
+       concat  Concatenates avro files without re-compressing.
+   fragtojson  Renders a binary-encoded Avro datum as JSON.
+     fromjson  Reads JSON records and writes an Avro data file.
+     fromtext  Imports a text file into an avro data file.
+      getmeta  Prints out the metadata of an Avro data file.
+    getschema  Prints out schema of an Avro data file.
+          idl  Generates a JSON schema from an Avro IDL file
+ idl2schemata  Extract JSON schemata of the types from an Avro IDL file
+       induce  Induce schema/protocol from Java class/interface via reflection.
+   jsontofrag  Renders a JSON-encoded Avro datum as binary.
+       random  Creates a file with randomly generated instances of a schema.
+      recodec  Alters the codec of a data file.
+       repair  Recovers data from a corrupt Avro Data file
+  rpcprotocol  Output the protocol of a RPC service
+   rpcreceive  Opens an RPC Server and listens for one message.
+      rpcsend  Sends a single RPC message.
+       tether  Run a tethered mapreduce job.
+       tojson  Dumps an Avro data file as JSON, record per line or pretty.
+       totext  Converts an Avro data file to a text file.
+     totrevni  Converts an Avro data file to a Trevni file.
+  trevni_meta  Dumps a Trevni file's metadata as JSON.
+trevni_random  Create a Trevni file filled with random instances of a schema.
+trevni_tojson  Dumps a Trevni file as JSON.
+
+# The current focus is on below
+     fromjson  Reads JSON records and writes an Avro data file. To convert from json to avro, it need getschema
+      getmeta  Prints out the metadata of an Avro data file. But may not be in structured format
+    getschema  Prints out schema of an Avro data file. Will be in proper structure
+trevni_tojson  Dumps a Trevni file as JSON. To validate the result	
+       totext  Converts an Avro data file to a text file.
+
+================
+
+#########################################  Chapter 1 ##############################
+#### Topic: Extract an Avro schema from a set of datafiles using avro-tools
+
+Ref: https://www.youtube.com/watch?v=loluXI1KyFc&index=82&list=PLf0swTFhTI8rJvGpOp-LujOcpk-Rlz-yE
+
+
+#### Step1: make sure the source file is in avro format
+# Create a folder in local called avro and run the below command from avro folder, as it will create so many files with .java and .avsc
+sqoop import-all-tables \
+-m12 \
+--connect "jdbc:mysql://nn01.itversity.com:3306/retail_db" \
+--username=retail_dba \
+--password=itversity \
+--as-avrodatafile \
+--warehouse-dir=/apps/hive/warehouse/qa.db/
+
+
+
+#### Step2: Pre-request for below commands. 
+
+## The above file imported to HDFS, we need to move that to local
+## a. Create a following directory in local: /home/saranvisa/avro
+## b. cd /home/saranvisa/avro and run the below command: it will download departments to local current directory
+	$ hdfs dfs -get /apps/hive/warehouse/qa.db/departments .
+## c. cd departments, it has list of .avro files and run the below commands
+
+
+#### Step3: Run the getmeta command
+	$ avro-tools getmeta part-m-00000.avro
+# Output:
+log4j:WARN No appenders could be found for logger (org.apache.hadoop.metrics2.lib.MutableMetricsFactory).
+log4j:WARN Please initialize the log4j system properly.
+log4j:WARN See http://logging.apache.org/log4j/1.2/faq.html#noconfig for more info.
+avro.schema     {"type":"record","name":"departments","doc":"Sqoop import of departments","fields":[{"name":"department_id","type":["null","int"],"default":null,"columnName":"department_id","sqlType":"4"},{"name":"department_name","type":["null","string"],"default":null,"columnName":"department_name","sqlType":"12"}],"tableName":"departments"}
+
+#### Step4: Run the getschema command
+	$ avro-tools getschema part-m-00000.avro
+# Output:
+log4j:WARN No appenders could be found for logger (org.apache.hadoop.metrics2.lib.MutableMetricsFactory).
+log4j:WARN Please initialize the log4j system properly.
+log4j:WARN See http://logging.apache.org/log4j/1.2/faq.html#noconfig for more info.
+{
+  "type" : "record",
+  "name" : "departments",
+  "doc" : "Sqoop import of departments",
+  "fields" : [ {
+    "name" : "department_id",
+    "type" : [ "null", "int" ],
+    "default" : null,
+    "columnName" : "department_id",
+    "sqlType" : "4"
+  }, {
+    "name" : "department_name",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "department_name",
+    "sqlType" : "12"
+  } ],
+  "tableName" : "departments"
+}
+	
+#### Step5: Run the tojson command
+	$ avro-tools tojson part-m-00000.avro
+	
+# Output:	
+log4j:WARN No appenders could be found for logger (org.apache.hadoop.metrics2.lib.MutableMetricsFactory).
+log4j:WARN Please initialize the log4j system properly.
+log4j:WARN See http://logging.apache.org/log4j/1.2/faq.html#noconfig for more info.
+{"department_id":{"int":2},"department_name":{"string":"Development"}}
+{"department_id":{"int":3},"department_name":{"string":"Footwear"}}
+{"department_id":{"int":4},"department_name":{"string":"Apparel"}}
+{"department_id":{"int":5},"department_name":{"string":"Golf"}}
+{"department_id":{"int":6},"department_name":{"string":"Outdoors"}}
+{"department_id":{"int":7},"department_name":{"string":"Fan Shop"}}
+
+
+## g. Also we can change the extension of file to JSON as follows. It will store the above json format file
+	$ avro-tools tojson part-m-00000.avro > part-m-00000.json
+
+#### Step6: Run the fromjson command. Pre-request: It need getschema
+	
+	$ avro-tools fromjson part-m-00000.json  ## This command will through an error that need an input --schema-file
+	
+Need an input schema file (--schema-file) or inline schema (--schema)
+Option             Description
+------             -----------
+--codec            Compression codec (default: null)
+--level <Integer>  Compression level (only applies to
+                     deflate and xz) (default: -1)
+--schema           Schema
+--schema-file      Schema File
+	
+
+	$ avro-tools getschema part-m-00000.avro > part-m-00000.avsc	 ## This will create a schema file with extn .avsc 
+	$ avro-tools fromjson part-m-00000.json --schema-file part-m-00000.avsc  ## Not working need to verify 
+	
+#### Step6: Run the totext command
+	$ avro-tools totext part-m-00000.avro dept.txt					## There is an issue, need to check
+	
+	
+	
+###############################################################	Chapter 2 ######################
+
+#### Topic: Create a table in the Hive Metastore using Avro file format and an external schema file
+
+DataPath (In HDFS) 					: /apps/hive/warehouse/qa.db/departments
+Avro Schema (.avsc) Path (In HDFS)	: hdfs://nn01.itversity.com/user/saranvisa/avro/departments/departments.avsc
+
+
+Note: 
+https://www.youtube.com/watch?v=2-27UvXCOyo&index=83&list=PLf0swTFhTI8rJvGpOp-LujOcpk-Rlz-yE
+
+#### Step 1: In HDFS, Verify the required avro files are available
+
+## Note 1: As part of Chapter 1, Imported some tables as-avrodatafile. Make sure the path has required avro files
+
+	$ hdfs dfs -ls /apps/hive/warehouse/qa.db/
+	$ hdfs dfs -ls /apps/hive/warehouse/qa.db/departments
+Found 13 items
+-rw-r--r--   3 saranvisa hdfs          0 2017-03-16 15:01 /apps/hive/warehouse/qa.db/departments/_SUCCESS
+-rw-r--r--   3 saranvisa hdfs        454 2017-03-16 15:01 /apps/hive/warehouse/qa.db/departments/part-m-00000.avro
+-rw-r--r--   3 saranvisa hdfs        365 2017-03-16 15:01 /apps/hive/warehouse/qa.db/departments/part-m-00001.avro
+
+## Note 2: Using these avro files, we have to create tables in Hive metastore and while defining the table we have to provide the external schema file
+
+#### Step 2: In Local, Make sure .java and .avsc files are available under /home/saranvisa/avro. These files will be automatically created during Sqoop import as-avrodatafile
+
+## Note 1: Here .avsc is more import, cat filename.avsc, you will find table structure in JSON format
+
+[saranvisa@gw01 avro]$ pwd
+/home/saranvisa/avro
+[saranvisa@gw01 avro]$ ls -ltr
+total 72
+-rw-r--r-- 1 saranvisa students 14124 Mar 16 15:00 categories.java
+-rw-r--r-- 1 saranvisa students   594 Mar 16 15:00 categories.avsc
+-rw-r--r-- 1 saranvisa students 27626 Mar 16 15:01 customers.java
+-rw-r--r-- 1 saranvisa students  1509 Mar 16 15:01 customers.avsc
+-rw-r--r-- 1 saranvisa students 11573 Mar 16 15:01 departments.java
+-rw-r--r-- 1 saranvisa students   440 Mar 16 15:01 departments.avsc
+
+#### Step 3: Move the .avsc files from Local to HDFS. No need to move it under the folder where we have data
+
+## Create the following folder and move the .avsc files
+[saranvisa@gw01 avro]$ hdfs dfs -mkdir /user/saranvisa/avro
+[saranvisa@gw01 avro]$ hdfs dfs -mkdir /user/saranvisa/avro/departments
+[saranvisa@gw01 avro]$ hdfs dfs -copyFromLocal departments.* /user/saranvisa/avro/departments
+[saranvisa@gw01 avro]$ hdfs dfs -ls /user/saranvisa/avro/departments
+Found 2 items
+-rw-r--r--   3 saranvisa hdfs        440 2017-03-17 14:34 /user/saranvisa/avro/departments/departments.avsc
+-rw-r--r--   3 saranvisa hdfs      11573 2017-03-17 14:34 /user/saranvisa/avro/departments/departments.java
+
+
+#### Step 4: Login to hive and create external table using "avro.schema.url"
+
+$ Hive
+hive> Use qa;
+Hive> 
+CREATE EXTERNAL TABLE departments
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
+STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
+OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+LOCATION 'hdfs:///apps/hive/warehouse/qa.db/departments'
+TBLPROPERTIES ('avro.schema.url'='hdfs://nn01.itversity.com/user/saranvisa/avro/departments/departments.avsc');
+
+## Use the data path & Avro schema path
+
+#### Step 5: Login to hive and create external table using "avro.schema.literal"
+
+## Pre-request (in Local): Get the schema in JSON type as follows 
+[saranvisa@gw01 departments]$ pwd
+/home/saranvisa/avro/departments
+[saranvisa@gw01 departments]$ ls -ltr
+total 48
+-rw-r--r-- 1 saranvisa students   0 Mar 16 15:20 _SUCCESS
+-rw-r--r-- 1 saranvisa students 454 Mar 16 15:20 part-m-00000.avro
+-rw-r--r-- 1 saranvisa students 365 Mar 16 15:20 part-m-00001.avro
+-rw-r--r-- 1 saranvisa students 365 Mar 16 15:20 part-m-00002.avro
+
+[saranvisa@gw01 departments]$ avro-tools getschema part-m-00000.avro
+log4j:WARN No appenders could be found for logger (org.apache.hadoop.metrics2.lib.MutableMetricsFactory).
+log4j:WARN Please initialize the log4j system properly.
+log4j:WARN See http://logging.apache.org/log4j/1.2/faq.html#noconfig for more info.
+{
+  "type" : "record",
+  "name" : "departments",
+  "doc" : "Sqoop import of departments",
+  "fields" : [ {
+    "name" : "department_id",
+    "type" : [ "null", "int" ],
+    "default" : null,
+    "columnName" : "department_id",
+    "sqlType" : "4"
+  }, {
+    "name" : "department_name",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "department_name",
+    "sqlType" : "12"
+  } ],
+  "tableName" : "departments"
+}
+
+## Login to hive and Create a table using 'avro.schema.literal'
+
+$ hive
+hive> use qa;
+hive>
+CREATE EXTERNAL TABLE departments1
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
+STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
+OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+LOCATION 'hdfs:///apps/hive/warehouse/qa.db/departments'
+TBLPROPERTIES ('avro.schema.literal'='{
+  "type" : "record",
+  "name" : "departments",
+  "doc" : "Sqoop import of departments",
+  "fields" : [ {
+    "name" : "department_id",
+    "type" : [ "null", "int" ],
+    "default" : null,
+    "columnName" : "department_id",
+    "sqlType" : "4"
+  }, {
+    "name" : "department_name",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "department_name",
+    "sqlType" : "12"
+  } ],
+  "tableName" : "departments"
+}');
+
+Note: If you are using Cloudera & Impala, make sure the tables are accessible from Impala-shell
+
+###############################################################	Chapter 3 ######################
+#### Topic: Easy way to create a hive table as AVRO format
+#### Topic: Improve query performance by creating partitioned tables in the hive metastore  (using avro file format)
+
+https://www.youtube.com/watch?v=DXmmTNOp9bk&index=84&list=PLf0swTFhTI8rJvGpOp-LujOcpk-Rlz-yE
+
+#### Topic: Easy way to create a hive table as AVRO format
+## STEP1 : Login to hive, use qa.db and create customers table
+
+$ hive
+hive> use qa;
+hive> 
+CREATE EXTERNAL TABLE customers
+STORED AS AVRO
+LOCATION 'hdfs:///apps/hive/warehouse/qa.db/customers'
+TBLPROPERTIES ('avro.schema.url'='hdfs://nn01.itversity.com/user/saranvisa/avro/customers/customers.avsc');
+
+##NOTE: No need to specify the column names as it is alredy part of avro.schema  ** Need to revisit, may be I misunderstood something
+
+hive>  select count(*) from qa.customers;  -- It has 12k records
+
+hive> describe formatted qa.customers;
+# col_name              data_type               comment
+
+customer_id             int
+customer_fname          string
+customer_lname          string
+customer_email          string
+customer_password       string
+customer_street         string
+customer_city           string
+customer_state          string
+customer_zipcode        string
+
+# Detailed Table Information
+Database:               qa
+Owner:                  saranvisa
+CreateTime:             Sat Mar 18 15:15:42 EDT 2017
+LastAccessTime:         UNKNOWN
+Protect Mode:           None
+Retention:              0
+Location:               hdfs://nn01.itversity.com:8020/apps/hive/warehouse/qa.db/customers
+Table Type:             EXTERNAL_TABLE
+Table Parameters:
+        EXTERNAL                TRUE
+        avro.schema.url         hdfs://nn01.itversity.com/user/saranvisa/avro/customers/customers.avsc
+        numFiles                12
+        totalSize               1045171
+        transient_lastDdlTime   1489864542
+
+# Storage Information
+SerDe Library:          org.apache.hadoop.hive.serde2.avro.AvroSerDe
+InputFormat:            org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat
+OutputFormat:           org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat
+Compressed:             No
+Num Buckets:            -1
+Bucket Columns:         []
+Sort Columns:           []
+Storage Desc Params:
+        serialization.format    1
+Time taken: 0.372 seconds, Fetched: 38 row(s)
+
+hive> select * from customers limit 5;
+OK
+1       Richard Hernandez       XXXXXXXXX       XXXXXXXXX       6303 Heather Plaza      Brownsville     TX      78521
+2       Mary    Barrett XXXXXXXXX       XXXXXXXXX       9526 Noble Embers Ridge Littleton       CO      80126
+3       Ann     Smith   XXXXXXXXX       XXXXXXXXX       3422 Blue Pioneer Bend  Caguas  PR      00725
+4       Mary    Jones   XXXXXXXXX       XXXXXXXXX       8324 Little Common      San Marcos      CA      92069
+5       Robert  Hudson  XXXXXXXXX       XXXXXXXXX       10 Crystal River Mall   Caguas  PR      00725
+Time taken: 0.202 seconds, Fetched: 5 row(s)
+
+#### Topic: Improve query performance by creating partitioned tables in the hive metastore  (using avro file format)
+https://www.youtube.com/watch?v=DXmmTNOp9bk&index=84&list=PLf0swTFhTI8rJvGpOp-LujOcpk-Rlz-yE
+<<pending>>
+
+a. Create table with partition
+b. Alter the table by adding partition
+c. Insert data into partition & select 
+d. Dynamic partition
+
+###############################################################	Chapter 4 ######################
+#### Topic: Evolve an Avro schema by changing JSON files. (Edit the avro schema file to include additional columns)
+
+https://www.youtube.com/watch?v=mifQGz-6UY0&list=PLf0swTFhTI8rJvGpOp-LujOcpk-Rlz-yE&index=85
+
+## Short Desc: For an existing Avro table, how to add an additional column (in JSON) without impacting the underlined data. This is similar to add/modify column in RDBMS. In General, hive table will not support column level changes but with Avro it is possible
+
+Tips: 
+1. Consider you have data in location /apps/hive/warehouse/qa.db/customers and it has below files "before structure change"
+part-m-00000, part-m-00001
+2. Now if you make the structure change and instert records into customer, it will create a new file to capture the new data "after structure change"
+part-m-00000, part-m-00001, part-m-00002
+3. Known issue: Impala can read the avro data but not able to write. Overall Impala will NOT support avro. Need to check the latest version. 
+
+<<pending>>
+
+
+
+
+
