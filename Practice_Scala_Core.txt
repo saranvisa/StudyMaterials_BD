@@ -1,0 +1,180 @@
+## Scala - core
+	a. REPL & Basic programming constructs
+	b. Object Oriented Concepts
+	c. Collections and functional programming on collections
+	d. Creating sbt projects using Eclipse or Intellij
+	d. Develop Scala applications using JDBC and other 3rd party tools
+	e. Develop using IntelliJ and build using sbt
+	f. Collections
+
+####################################################################            INDEX                  ######################   	
+1. Chapter1: Scala: Quick Reference
+2. Chapter2: Scala: REPL & Basic
+3. Chapter3: Scala: Object Oriented Language
+4. Chapter4:
+5. Chapter5: 
+#################################################################### Chapter1: Scala: Quick Reference ######################   
+
+1. scala - Learn how to install in Linux -- PENDING
+2. Scala is Case sensitive, written on top of Java, it will easy our work
+3. Easiest way to install Intellij, SBT & Scala: search for Scala Download -> click on All downloads -> Choose the required version (Ex: 2.11.8)  -> Choose Install One of the Scala IDE -> Intellij IDE with Scala Plugin -> It will get Intellij and Scala -> But Scala Plugin might not be installed, it might be there as part of it, so you have to choose
+4. $ scala  ## To login
+5. scala> :quit
+6. scala> :help
+7. scala> math.random  ## To return some random value
+res1: Double = 0.16350813856150903
+8. Objective vs Subjective : An objective perspective is one that is not influenced by emotions, opinions, or personal feelings - it is a perspective based in fact, in things quantifiable and measurable. A subjective perspective is one open to greater interpretation based on personal feeling, emotion, aesthetics, etc
+## COMMENT in ITVERSITY link: My first choice would be HDPCD:Spark as it is subjective exam. But it is relatively new and there can be some challenges for the first time.
+http://www.itversity.com/2016/07/05/hadoop-and-spark-developer-certifications-faqs/
+
+9. Mutable vs Immutable: In Scala, it is not mandatory to mention the data type but it is mandatory to mention the variable is mutable (Var) or Immutable (Val)
+10. Single quote vs Double quotes: In Scala, use single quote to assign a Char to a var/val and use double quotes to assign a String to a var/val
+ 
+
+
+???. Create RDD for Parallelized Collections: Array & Collection
+https://www.youtube.com/watch?v=Ra1tTDHP53Y&index=11&list=PLf0swTFhTI8pgc4wyhT8lIEJCPT08RI3X
+
+
+#################################################################### Chapter2: Scala: REPL & Basic ###########################   
+## REPL & Basic programming constructs   
+https://www.youtube.com/watch?list=PLf0swTFhTI8qCIiR6SPSmK8btFEgnkK0Q&v=7DMF3kwrwWE
+
+## REPL - Read Evaludate Print and Loop. It is nothing but a command line interface, Something similar to SQLPlus for Oracle. It will help us to interact with the service quickly without IDE. We can use REPL just to explore but for real development IDE should be used.
+
+## $ scala ## If you have scala installed then it will bring to scala window, this is nothing but REPL
+## $ python ## If you have python installed then it will bring to python window, this is nothing but REPL
+
+## Immutable declaration
+scala> val i =1
+scala> val i:Int = 1
+
+## Mutable declaration
+scala> var i =1
+scala> var i:Int = 1
+
+## case class
+scala> case class HelloWorld(var i:Int, var j:String)
+defined class HelloWorld
+
+## To see what case class HelloWorld contains, To get the internal Java program
+scala> :javap -p HelloWorld   ## The below failure shows some issue with Scala Configuration
+Failed: No javap tool available: scala.tools.nsc.interpreter.JavapClass$JavapTool6 failed to initialize.
+
+## if-else Condition
+if (simpleExpression) {Expression}
+else {Expression}
+
+## Ex for if-else Condition
+scala> val num = 10
+scala> val res1 = if (num == 10) {
+     | println("Equal to Ten")
+     | } else {
+     | println("NOT equal to Ten")
+     | }
+Equal to Ten
+## We can also write the above in single statement in scala, but Python to be tested
+
+## Important DataTypes
+Int, Long, Char, String, Float, Double and Boolean
+
+
+######################################################### Chapter3: Scala: Object Oriented Language ###########################   
+
+## PENDING: NEED TO UNDERSTAND THE DIFFERENCED BETWEEN CASE CLASS AND CLASS ##
+
+## To create a new class
+scala> class FirstClass
+defined classs FirstClass
+
+## To see what the class contains, for some reason the below command is not working in some environment
+scala> :javap -p FirstClass
+
+## A Sample class, The Entire body of the Class is a constructor in Scala. 
+## You can also specify multiple constructors but the default constructor is body
+scala> class FirstClass {
+     | println ("First Class")
+     |
+     | if (math.random > 0.5)
+     | println ("Greater than 0.5")
+     | else
+     | println("Lesser than or equal to 0.5")
+     | }
+defined class FirstClass
+
+## To execute the class
+scala> var a = new FirstClass()
+First Class
+Lesser than or equal to 0.5
+a: FirstClass = FirstClass@6dd7b5a3
+
+## Provide constructor arguments, no need to mention return data type
+scala> class SimpleAdd(i:Int, j:Int) {
+     | println(i+j)
+     | }
+defined class SimpleAdd
+
+## To execute the constructor by passing arguments
+scala> val a = new SimpleAdd(3,6)
+9
+a: SimpleAdd = SimpleAdd@4eaf3684
+
+----------------------------
+## Function to add two numbers, need to mention the return data type ONLY if we are writing function in multiple lines, refer below
+scala> def SimpleAdd(i:Int, j:Int):Int = {
+     | i + j
+     | }
+SimpleAdd: (i: Int, j: Int)Int
+
+## To execute the function, just call it and pass arguments
+scala> SimpleAdd(3,6)
+res0: Int = 9
+
+## Function to add two numbers, in single line. No need to mention return data type
+## Because the body of method is an expression itself, no need to mention the return data type
+scala> def SimpleAdd1(i:Int, j:Int) = i+j
+SimpleAdd1: (i: Int, j: Int)Int
+
+scala> SimpleAdd1(22,55)
+res1: Int = 77
+
+----------------------------
+## Singleton Object 
+## Scala provides a first class syntactic sugar for singleton classes 
+scala> object FirstObject{
+     | def sayHello (name:String) = "Helo :" + name
+     | }
+defined object FirstObject
+
+scala> FirstObject.sayHello("Kumar")
+res2: String = Helo :Kumar
+
+## Ex2: for Singleton Object
+scala> object HeloWorld{
+     |   def main(args: Array[String]) {
+     |     print("Hello world")
+     | }
+     | }
+defined object HeloWorld
+
+scala> HeloWorld.main(Array(" "))
+Hello world
+
+######################################################### Chapter3: Scala: Collection #############################################
+Pending:
+https://www.youtube.com/watch?v=VIBJSk1t8KY&list=PLf0swTFhTI8qCIiR6SPSmK8btFEgnkK0Q&index=2
+
+
+Scala core -  ON HOLD  -- Need to focus on Spark ****
+
+
+
+
+
+
+
+
+
+
+
+
