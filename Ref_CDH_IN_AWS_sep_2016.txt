@@ -1,16 +1,75 @@
-Using Ubuntu in AWS
+======================= GITHUB=========
+
+-------- Using Ubuntu in AWS
 http://gethue.com/hadoop-tutorial-how-to-create-a-real-hadoop-cluster-in-10-minutes/
 
-------- Usr
-1. ec2-user - default user
-2. kumar - pwd: hadoop2
-3. root - pwd: hadoop1
-4. mysql - hadoop1
 
 ----Before installation
-1.	Finalize the RedHat version  					** RedHat 6.5 **
-2.	Identify the corresponding MySQL version suitable for Redhat    ** mysql57-community-release-el6-9.noarch.rpm **
-3.	Identify the corresponding CDH version suitable for MySQL	** CDH 5.7.0 **
+1. Finalize the RedHat version  										** RedHat 6.5 **
+2. Identify the corresponding MySQL version suitable for Redhat    		** mysql57-community-release-el6-9.noarch.rpm **
+3. Identify the corresponding CDH version suitable for MySQL			** CDH 5.7.0 **
+4. Finalize the Linux File System-Mounting Point and make sure Separate Mounting Point for /var, so that MySQL will refer to /var instead of root(/)
+   NOTE: Cloudera navigator will occupy more space in MySQL (after couple of years), so if MySQL configured in root, it will create trouble
+5. Finalize the Linux File System-Mounting Point and make sure DataNode is NOT referring to ROOT
+Cloudera Manager -> HDFS -> Configuration -> DataNode Data Directory (dfs.data.dir, dfs.datanode.data.dir)
+Ex: File System
+$ df -h
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/md2        459G   73G  363G  17% /
+tmpfs            63G  4.0K   63G   1% /dev/shm
+/dev/md0        184M  121M   55M  69% /boot			## It is good to have separate space for Linux Kernal
+/dev/sda4       6.6T  107G  6.5T   2% /u01
+/dev/sdb4       6.6T  978M  6.6T   1% /u02
+/dev/sdc1       7.1T  329G  6.8T   5% /u03
+/dev/sdd1       7.1T  311G  6.8T   5% /u04
+/dev/sde1       7.1T  333G  6.8T   5% /u05
+/dev/sdf1       7.1T  341G  6.8T   5% /u06
+/dev/sdg1       7.1T  345G  6.8T   5% /u07
+/dev/sdh1       7.1T  327G  6.8T   5% /u08
+/dev/sdi1       7.1T  330G  6.8T   5% /u09
+/dev/sdj1       7.1T  331G  6.8T   5% /u10
+/dev/sdk1       7.1T  331G  6.8T   5% /u11
+/dev/sdl1       7.1T  328G  6.8T   5% /u12
+cm_processes     63G   15G   49G  24% /var/run/cloudera-scm-agent/process
+
+Cloudera Manager -> HDFS -> Configuration -> DataNode Data Directory (dfs.data.dir, dfs.datanode.data.dir)
+# DataNode Default Group
+/u12/hadoop/dfs,
+/u11/hadoop/dfs,
+/u10/hadoop/dfs,
+/u09/hadoop/dfs,
+/u08/hadoop/dfs,
+/u07/hadoop/dfs,
+/u06/hadoop/dfs,
+/u05/hadoop/dfs,
+/u04/hadoop/dfs,
+/u03/hadoop/dfs,
+/u02/hadoop/dfs,
+/u01/hadoop/dfs
+
+EX: $ ls -ltr /u04/hadoop/dfs/current
+total 8
+-rw-r--r-- 1 hdfs hadoop  197 Mar 24 15:13 VERSION
+drwx------ 4 hdfs hadoop 4096 Mar 24 15:13 BP-241413917-10.3.2.1-1458616808423
+
+# DataNode : Using this option we can also customize the file system for DataNode differently for each Nodes
+
+6. Finalize the Linux File System-Mounting Point and make sure YARN NodeManager is NOT referring to ROOT
+Cloudera Manager -> YARN -> Configuration -> NodeManager Local Directories (yarn.nodemanager.local-dirs)
+
+# NodeManager Default Group
+/u12/hadoop/yarn/nm,
+/u11/hadoop/yarn/nm,
+/u10/hadoop/yarn/nm,
+/u09/hadoop/yarn/nm,
+/u08/hadoop/yarn/nm,
+/u07/hadoop/yarn/nm,
+/u06/hadoop/yarn/nm,
+/u05/hadoop/yarn/nm,
+/u04/hadoop/yarn/nm,
+/u03/hadoop/yarn/nm,
+/u02/hadoop/yarn/nm,
+/u01/hadoop/yarn/nm
 
 
 ------------ set password for root
@@ -20,6 +79,7 @@ sudo passwd root;
 # hadoop1
 groupadd hadoop; useradd kumar -g hadoop; usermod -aG wheel  kumar; passwd kumar;
 # pwd: hadoop2
+
 
 ## For existing users
 $ groupadd hive-users
@@ -279,6 +339,7 @@ addprinc -pw hadoop1 hdfs@AWS.COM
 addprinc -pw hadoop1 hive@AWS.COM
 addprinc -pw hadoop1 root@AWS.COM
 addprinc -pw hadoop1 kumar@AWS.COM
+addprinc -pw hadoop1 kumar1@AWS.COM
 #########################################################
 
 # Add only child hosts
