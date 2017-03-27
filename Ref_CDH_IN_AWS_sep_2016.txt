@@ -71,6 +71,35 @@ Cloudera Manager -> YARN -> Configuration -> NodeManager Local Directories (yarn
 /u02/hadoop/yarn/nm,
 /u01/hadoop/yarn/nm
 
+7. Finalize the Linux File System-Mounting Point and make sure Impala Daemon is NOT referring to ROOT
+Cloudera Manager -> Impala -> Configuration -> Impala Daemon Scratch Directories (scratch_dirs)
+
+# Impala Daemon Default Group
+/u01/impala/impalad,
+/u02/impala/impalad,
+/u03/impala/impalad,
+/u04/impala/impalad,
+/u05/impala/impalad,
+/u06/impala/impalad,
+/u07/impala/impalad,
+/u08/impala/impalad,
+/u09/impala/impalad,
+/u10/impala/impalad,
+/u11/impala/impalad,
+/u12/impala/impalad
+
+[root@bda1node03 impalad]# pwd
+/u01/impala/impalad/impala-scratch
+
+By default, intermediate files used during large sort, join, aggregation, or analytic function operations are stored in the directory /tmp/impala-scratch . These files are removed when the operation finishes. You can specify a different location by starting the impalad daemon with the --scratch_dirs="path_to_directory" configuration option. The scratch directories must be on the local filesystem, not in HDFS.
+
+As on 2015, Impala does not support limiting scratch file usage. You can achieve this at the operating system level with disk quotas for the impala user or by putting the scratch directory on a separate disk partition.
+
+https://www.cloudera.com/documentation/enterprise/5-9-x/topics/impala_disk_space.html
+https://community.cloudera.com/t5/Interactive-Short-cycle-SQL/Impala-scratch-file/m-p/31907#M1085
+
+
+8. How to handle Memory overcommit issue between Yarn & Impala? Pending
 
 ------------ set password for root
 sudo passwd root;
