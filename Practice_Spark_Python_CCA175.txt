@@ -1,0 +1,731 @@
+﻿CCA175:
+
+old Playlist : 92 videos
+New Playlist : https://www.youtube.com/playlist?list=PLf0swTFhTI8q0x0V1E6We5zBQ9UazHFY0
+
+TIPS: General
+==============
+1. sc: Spark Context, will be automatically localled by launching spark-shell or pyspark
+2. Login to spark-shell (or) pyspark session will take some resources. So before submit any major job, check all the active sessions and close unwanted, otherwise it may go running out of memory issue
+3. SparkContext and SparkConf are classes in pyspark module & Scala module
+
+TIPS: Spark - Transformation
+============================
+## Some Transformations
+1.	flatMap(Func): Ex: To split each line into words (Used in word count program)
+2.	Map(func): Ex: To split the columns from each line
+3.	ReducedbyKey. Use it when both Combiner and reducer login are same Ex: Includes combiner as well as reducer to get the value. Suitable for simple aggregation. 
+4.	groupByKey([numTasks]): ## Suitable for Sorting, Ranking
+5.	aggregateByKey  Use it when Combiner logic and reducer logic are different  ## Suitable for complex aggregation
+6.	sortByKey([ascending], [numTasks]) : 
+
+## Transformation used for Join disparate datasets together using Spark
+1.	join(otherDataset, [numTasks]): # To join two data sets. Pre-request: common KEY
+2.	filter(func): # To filter a particular row from RDD
+
+TIPS: Spark - JOIN
+==================
+## Consider you have two RDDs ordersRDD and orderItemsRDD
+## ordersRDD based on small table
+## orderItemsRDD based on large table
+## Use the join as follows: Keep the smaller RDD inside and larger RDD outside
+ordersJoinOrderItems = orderItemsRDD.join(ordersRDD)
+
+TIPS: Spark - Action
+====================
+a.	Count()
+b.	Collect()   # To get all the records from RDD. Can be used in For loop
+c.	take(n)     # To get n number of records from RDD. Can be used in For loop. Ex: take(5) will get first 5 records from RDD
+d.	saveAsTextFile(path)
+e.	saveAsObjectFile(path)
+f.	saveAsSequenceFile(path)
+g.	foreach(func)
+
+TIPS: Frequently Used File Formats
+==================================
+a.	saveAsTextFile             	## No need to import any api
+b.	saveAsObjectFile         	## No need to import any api
+c.	saveAsSequenceFile   		## Need to import Classes for KEY & VALUE
+d. 	saveAsJSONFile
+
+TIPS: SEQUENCE FILE
+====================
+1. In Scala: 
+Import org.apache.hadoop.io._
+Import org.apache.hadoop.mapreduce.lib.output._
+dataRDD.map(x => (NullWritable.get(), x)).saveAsSequenceFile(“/user/saranvisa/seqfile1)
+KEY = NullWritable.get()
+VALUE = x
+
+2. In Python:
+## KEY = "org.apache.hadoop.io.IntWritable"
+## VALUE = "org.apache.hadoop.io.Text"
+>>> dataSeqRDD1 = sc.sequenceFile(path,"org.apache.hadoop.io.IntWritable","org.apache.hadoop.io.Text")
+
+
+TIPS: Database
+==============
+1. Pre-request to connect to Hive. Spark Conf path should have either hive-site.xml or should have a soft link to hive Conf path
+/etc/spark/conf
+/etc/hive/conf/hive-site.xml
+2. Use SQLContext, HiveContext to connect to Hive/Impala which is available in HDFS
+3. Use JDBC Connection to connect to Remote Databases like Oracle, Teradata, etc
+4. Use pyspark.sql (and) pyspark to import HiveContext & SQLContext as follows: 
+	from pyspark.sql 	import HiveContext				## pyspark.sql
+	from pyspark 		import SparkContext, SparkConf 	## pyspark   
+
+
+TIPS: Scala vs Python
+======================
+1. Auto Fill: Scala supports  where as Python doesn't
+2. Scala variable/RDD	: requires prefix with val/var
+   Python variable/RDD	: doesn't require to prefix
+3. Scope of loops: Scala uses curly brackets {}
+   Scope of loops: Python doesn't use {} instead use : it will go to next line, give a space and type the commands.
+   Note: We can use any number of space. Ex: if we use two spaces, give two spaces for all the upcoming lines, etc
+   Ex: 	>>> for rec in empRDD.collect():
+		...   print(rec)
+		...
+ 
+4. Python: To Read a sequesequence file, It is optional to specify the DATATYPE of KEY & VALUE 
+   Scala : To Read a sequence file, It is mandatory to specify the DATATYPE of KEY & VALUE
+5.   
+
+TIPS: For LOOP
+================
+## To collect all the records
+>>> for rec in ordersMap.collect():
+...   print(rec)
+
+## To take the first 5 records
+>>> for rec in ordersMap.take(5):
+...   print(rec)
+
+
+TIPS: IMPORT
+================
+1. Python Importing: Frequently used 		
+	from pyspark import SparkContext, SparkConf
+	from pyspark  import SQLContext
+	from pyspark.sql import HiveContext
+	
+2. Scala  Importing: Frequently used 	
+	import org.apache.spark.SparkContext
+	import org.apache.spark.SparkConf
+	import org.apache.spark.sql.hive.HiveContext
+	Import org.apache.hadoop.mapreduce.lib.output
+	Import org.apache.hadoop.io
+	
+
+TIPS: RDD Connection to textFile, jsonFile, HiveContext, SQLContext, SparkContext(sc)
+=====================================================================================
+textFile & SparkContext
+=======================
+from pyspark import SparkContext
+dataRDD = sc.textFile("/user/saranvisa/sqoop_import/orders") ## orders is a direcory which has many files
+
+jsonFile & SQLContext
+=====================
+from pyspark  import SQLContext
+sqlContext = SQLContext(sc)
+empJSON = sqlContext.jsonFile("/user/saranvisa/scala-sbt-input/empjson.json")
+empJSON.registerTempTable("empjson")
+		
+HiveContext 
+===========
+>>> from pyspark.sql import HiveContext
+>>> sqlContext = HiveContext(sc)
+>>> dataRDD = sqlContext.sql("select * from qa.emp")
+
+
+		
+TIPS: Certification
+====================
+1. If there is no Condition to use Context, use HiveContext/SQLContext, it will minimize the work
+2. The sort question is very slow, so When you running one question, you can write next question at sublime
+3. 120 mins for 10 question, first 10 mins to review all the questions, then 100 mins to attend all questions (each 10 mins)
+	10 mins - review
+	100 mins - 10 questinos (10 mins each)
+	10 mins - backup
+4. During revision, make sure each questions takes less than 5 to 10 mins	
+5. You will only use ctrl c/v at sublime. Use ctrl +shift +c/v at terminal
+6. For HDFS result validation, use "hdfs dfs -tail /user/sksivanandan/test1.txt"
+7. Just learn how to execute the script
+	it is actually.... go to that particular folder >     ./run.sh
+8. 	There wont be complex questions, learn to do basic operations like map,join,sortByKey,reduceByKey,filter,forEach,for,count & collect...
+	do multiple exercises on that becoz, there are parenthesis difference between python and scala... Its better try in cloudera VM rather than trying in plain vanilla hadoop or hortonworks @malavec
+9. 	sqoop questions taking more execution time and less time for spark & hive
+10. Did u use any IDE or managed with Sublime?
+
+
+##################################################################################################### INDEX ############
+## Chapter1: 
+1. LOGIN & LOGOUT
+2. MONITOR SPARK
+3. HIVE CONTEXT & SQL CONTEXT
+4. CREATE RDD & CONNECT TO HIVE
+5. CONNECT TO REMOTE DATABASE (Ex: MySQL)
+
+## Chapter2:
+1. DEVELOPING A SIMPLE PYTHON BASED APPLICATION FOR SPARK TO SAVE HDFS FILE WITH py EXTENSION
+
+## Chapter3:
+1. LOAD DATA FROM HDFS AND STORING RESULT BACK TO HDFS USING SPARK (Text, Sequence, JSON, etc)
+2. LOAD DATA/STORING DATA: TEXT FILE
+3. PRE-REQUEST: How does ARRAY, SPLIT works in general? (Useful for SEQUENCE FILE)
+4. LOAD DATA/STORING DATA: WRITE SEQUENCE FILE
+5. LOAD DATA/STORING DATA: READ  SEQUENCE FILE
+6. saveAsNewAPIHadoopFile FOR SAVING DATA IN HDFS WITH FILE FORMAT OF OUR CHOICE (eg: sequence file) -- TBD
+
+## Chapter4:
+1. LOAD DATA/STORING DATA: HIVE TABLE
+2. LOAD DATA/STORING DATA: JSON FILE
+
+## Chapter5:
+1. WORD COUNT of TEXTFILE using PYSPARK
+
+## Chapter6:
+1. How does MAP works in general?
+2. Join disparate datasets together using Spark
+3. Aggregate after joining data
+
+##################################################################################################### Chapter 1 ########
+Ref: https://www.youtube.com/watch?v=EGQjqcOIjIM&index=31&list=PLf0swTFhTI8rJvGpOp-LujOcpk-Rlz-yE
+
+TOPICS:
+=======
+1. LOGIN & LOGOUT
+2. MONITOR SPARK
+3. HIVE CONTEXT & SQL CONTEXT
+4. CREATE RDD & CONNECT TO HIVE
+5. CONNECT TO REMOTE DATABASE (Ex: MySQL)
+
+1. LOGIN & LOGOUT
+=================
+$ pyspark    				## launch python on YARN mode by default
+$ pyspark --master local  	## To launch in LOCAL mode
+$ exit() (or) Cntrl + D  	## Logout
+
+
+2. MONITOR SPARK
+================
+1. YARN MODE: Get the Namespace(Namenode) of the Resource Manager (OR) Go to resource Manager URL (CM/Ambari -> Yarn -> Quicklink UI)
+   Yarn Mode: Port 8088
+
+Ex: http://rm01.itversity.com:8088/cluster
+
+2. LOCAL MODE: Get the Namespace(Namenode) of Spark History Server (or) Go to CM/Ambari -> Spark -> Quicklink UI
+   Spark History Server: Port 18080
+   
+Ex: http://gw01.itversity.com:18080/
+
+
+3. HIVE CONTEXT & SQL CONTEXT
+=============================
+from pyspark.sql import HiveContext
+from pyspark.sql import SQLContext
+
+4. CREATE RDD & CONNECT TO HIVE
+=============================
+from pyspark.sql import HiveContext
+from pyspark.sql import SQLContext
+sqlContext = HiveContext(sc)
+empRDD = sqlContext.sql("select * from qa.emp")
+>>> for rec in empRDD.collect():
+		...   print(rec)
+		...
+
+5. CONNECT TO REMOTE DATABASE (Ex: MySQL)
+========================================
+# Either run the pyspark with "--driver-class-path"	or set environment variable with os.environ
+# Pre-request: Identify the connector jar, usually the mysql-connector-java is available at "/usr/share/java/"
+# Ex: "/usr/share/java/mysql-connector-java-5.1.40-bin.jar"
+# If you don't know the location then Find it as sudo find . -name "mysql-connector-java*.jar" -print
+
+pyspark --driver-class-path /usr/share/java/mysql-connector-java.jar		## While login to python
+os.environ['SPARK_CLASSPATH'] = "/usr/share/java/mysql-connector-java.jar"  ## After Login to python
+
+>>> os.environ['SPARK_CLASSPATH'] = "/usr/share/java/mysql-connector-java.jar"
+
+sqlContext = SQLContext(sc)
+jdbcurl = "jdbc:mysql://nn01.itversity.com:3306/retail_db?user=retail_dba&password=itversity"
+# LOAD Command in SQLContext 
+df = sqlContext.load(source="jdbc",url=jdbcurl,dbtable="departments")
+
+for rec in df.collect():
+  print(rec)
+  
+df.count()
+
+
+
+##################################################################################################### Chapter 2 ########
+
+https://www.youtube.com/watch?v=Quk2QV8N0vo&list=PLf0swTFhTI8rJvGpOp-LujOcpk-Rlz-yE&index=32
+
+TOPICS:
+=======
+
+
+1. DEVELOPING A SIMPLE PYTHON BASED APPLICATION FOR SPARK TO SAVE HDFS FILE WITH py EXTENSION
+================================================================================================
+vi saveFile.py   
+# This file will have the below code
+
+from pyspark import SparkContext, SparkConf    
+
+## While Monitor the job, App Name will help us to identify this job
+conf = SparkConf().setAppName("pyspark_kumar")  
+sc = SparkContext(conf=conf)
+dataRDD = sc.textFile("/user/saranvisa/sqoop_import/orders") ## orders is a direcory which has many files
+for rec in dataRDD.collect():
+  print(rec)
+  
+dataRDD.saveAsTextFile("/user/saranvisa/sqoop_import/orders_py") ## make sure the target dir is not exists
+
+## save the above content in a file and exit and submit the spark-shell
+## Submitting pyspark applications
+$ spark-submit --master yarn saveFile.py  ## To Run in YARN MODE
+$ spark-submit --master local saveFile.py  ## To Run in LOCAL MODE
+
+## Check the target direcory
+hdfs dfs -ls /user/saranvisa/sqoop_import/orders_py
+
+##################################################################################################### Chapter 3 ########
+
+http://www.itversity.com/topic/move-data-between-hdfs-and-spark-pyspark/
+
+TOPICS: 
+=======
+1. LOAD DATA FROM HDFS AND STORING RESULT BACK TO HDFS USING SPARK (Text, Sequence, JSON, etc)
+2. LOAD DATA/STORING DATA: TEXT FILE
+3. PRE-REQUEST: How does ARRAY, SPLIT works in general (Useful for SEQUENCE FILE)
+4. LOAD DATA/STORING DATA: WRITE SEQUENCE FILE
+5. LOAD DATA/STORING DATA: READ  SEQUENCE FILE
+6. saveAsNewAPIHadoopFile FOR SAVING DATA IN HDFS WITH FILE FORMAT OF OUR CHOICE (eg: sequence file) -- TBD
+
+
+
+1. LOAD DATA FROM HDFS AND STORING RESULT BACK TO HDFS USING SPARK (Text, Sequence, JSON, etc)
+==============================================================================================
+>>> from pyspark import SparkContext
+>>> dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/deptfile.txt")
+>>> for rec in dataRDD.collect():
+...   print(rec)
+...
+>>> print(dataRDD.count())
+
+## HDFS path - save as txt and json
+>>> dataRDD.saveAsTextFile("/user/saranvisa/scala-sbt-input/deptfile1.txt")
+>>> dataRDD.saveAsTextFile("/user/saranvisa/scala-sbt-input/deptfile2.json")
+
+## FULLY QUALIFIED Path
+>>> dataRDD.saveAsTextFile("hdfs://nn01.itversity.com:8020/user/saranvisa/scala-sbt-input/deptfile3.txt")
+
+## Fully qualified HDFS Path
+
+2. LOAD DATA/STORING DATA: TEXT FILE
+=====================================
+>>> from pyspark import SparkContext
+>>> dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/deptfile.txt")
+
+## By default, spark point to HDFS. Prefix with file:/// to point to local. 
+>>> dataRDD.saveAsTextFile("file:///home/saranvisa/deptfile_sprk1")
+>>> dataRDD1 = dataRDD.saveAsTextFile("file:///home/saranvisa/deptfile_sprk1")
+
+>>> for rec in dataRDD1.collect():
+...   print(rec)
+
+3. PRE-REQUEST: How does ARRAY, SPLIT works in general? (Useful for SEQUENCE FILE)
+==================================================================================
+Ex:1
+>pyspark
+>>> str = "stdid,stdname,mark1,mark2,mark3"
+
+## The Split command, build an array. In Python, array is represented with squar bracket []
+>>> str.split(",")
+['stdid', 'stdname', 'mark1', 'mark2', 'mark3']
+
+## Array starts from [0]
+## To access the specific element from the array, you can use [0] or [1], etc as follows
+>>> str.split(",")[0]
+'stdid'
+>>> str.split(",")[1]
+'stdname'
+>>> str.split(",")[3]
+'mark2'
+
+## In addition to split you can also speciy how to "group the values into number of elements"
+## Specify 0 to group all values into single group
+>>> str.split(",",0)
+['stdid,stdname,mark1,mark2,mark3']
+## Specify 1 to group first element in one group and rest in other group
+>>> str.split(",",1)
+['stdid', 'stdname,mark1,mark2,mark3']
+## Specify 2 to group first two elements in two different group and rest in other group
+>>> str.split(",",2)
+['stdid', 'stdname', 'mark1,mark2,mark3']
+
+## To get a particular group of elements
+>>> str.split(",",1)
+['stdid', 'stdname,mark1,mark2,mark3']
+>>> str.split(",",1)[0]
+'stdid'
+>>> str.split(",",1)[1]
+'stdname,mark1,mark2,mark3'
+>>> str.split(",",0)
+['stdid,stdname,mark1,mark2,mark3']
+>>> str.split(",",0)[0]
+'stdid,stdname,mark1,mark2,mark3'
+
+Ex:2
+>>> str = "helo world how are you"
+>>> str.split(" ")
+['helo', 'world', 'how', 'are', 'you']
+>>> str.split(" ")[0]
+'helo'
+>>> str.split(" ",1)
+['helo', 'world how are you']
+>>> str.split(" ",1)[1]
+'world how are you'
+
+
+4. LOAD DATA/STORING DATA: WRITE SEQUENCE FILE
+==============================================
+http://www.itversity.com/topic/move-data-between-hdfs-and-spark-pyspark/
+
+## ABOUT SEQUENCE FILE: 
+1. Structure of data will be metadata driven instead of considering each line as record
+2. Metadata will be in the form of key & value
+3. Key Value will take little more extra space than the original data as it needs to store metadata
+
+## PRE-REQUEST: before read you need to write the file as sequence file
+## PYTHON: LAMBDA FUNCTION: 
+## Ex: dataRDD.map(lambda x: (None, x)): 
+## a. LAMBDA is an ananymous function which can return the expression WITHOUT NAMING the function
+## b. each record will be passed to this lambda function and it will apply the transformation (None, x)
+## c. Lambda ananymous function is available inside the map function/transformation
+
+>>> from pyspark import SparkContext
+>>> dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/deptfile.txt")
+
+## Save as sequence file. It contains ascii
+>>> dataRDD.map(lambda x:(None, x)).saveAsSequenceFile("/user/saranvisa/scala-sbt-input/deptSeq")
+>>> dataRDD.map(lambda x: tuple(x.split(",",1))).saveAsSequenceFile("/user/saranvisa/scala-sbt-input/deptSeq")
+
+## To get the sequence data from RDD before save
+>>> for rec in dataRDD.map(lambda x:tuple(x.split(",",1))).collect():
+>>>   print(rec)
+
+(u'deptid', u'deptname')
+(u'10', u'HumanResource')
+(u'20', u'InformationTechnology')
+(u'30', u'Hardware')
+(u'40', u'Telephone')
+(u'50', u'Marketting')
+(u'60', u'Security')
+(u'70', u'Management')
+
+5. LOAD DATA/STORING DATA: READ  SEQUENCE FILE
+==============================================
+## PRE-REQUEST: before read you need to write the file as sequence file
+## TWO DIFFERENT TYPES
+## a. Python: To Read a sequence file, It is optional to specify the DATATYPE of KEY & VALUE 
+## b. Scala : To Read a sequence file, It is mandatory to specify the DATATYPE of KEY & VALUE
+
+## To read data from sequence files WITHOUT DATATYPE of KEY & VALUE 
+>>> path="/user/saranvisa/scala-sbt-input/deptSeq"
+>>> dataSeqRDD = sc.sequenceFile(path)
+>>> for rec in dataSeqRDD.collect():
+>>>   print(rec)
+
+## To read data from sequence files WITH DATATYPE of KEY & VALUE 
+## KEY = "org.apache.hadoop.io.IntWritable"
+## VALUE = "org.apache.hadoop.io.Text"
+>>> dataSeqRDD1 = sc.sequenceFile(path,"org.apache.hadoop.io.IntWritable","org.apache.hadoop.io.Text")
+>>> for rec1 in dataSeqRDD1.collect():
+>>>   print(rec1)
+
+6. saveAsNewAPIHadoopFile FOR SAVING DATA IN HDFS WITH FILE FORMAT OF OUR CHOICE (eg: sequence file) -- TBD
+============================================================================================================
+
+## It will accept 4 parameters
+
+>>> path="/user/cloudera/pyspark/departmentsSeq"
+
+>>> dataRDD.map(lambda x: tuple(x.split(",", 1))).saveAsNewAPIHadoopFile(path,"org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat",keyClass="org.apache.hadoop.io.Text",valueClass="org.apache.hadoop.io.Text")
+
+##################################################################################################### Chapter 4 ########
+http://www.itversity.com/topic/move-data-between-hdfs-and-spark-pyspark/
+https://www.youtube.com/watch?v=EwJTEWF6IGM
+
+TOPICS: 
+=======
+1. LOAD DATA/STORING DATA: HIVE TABLE
+2. LOAD DATA/STORING DATA: JSON FILE
+
+## To get the table data from Hive, Import HiveContext
+>>> from pyspark.sql import HiveContext
+>>> sqlContext = HiveContext(sc)
+>>> dataRDD = sqlContext.sql("select * from qa.emp")
+>>> for rec in dataRDD.collect():
+>>>   print(rec)
+
+## Two options to print a selected column from a table
+## Option 1: select the column in the query itself
+>>> dataRDD = sqlContext.sql("select empid from qa.emp")
+>>> for rec in dataRDD.collect():
+>>>   print(rec)
+## Option2: select a column from RDD
+>>> dataRDD = sqlContext.sql("select * from qa.emp")
+>>> for rec in dataRDD.collect():
+>>>    print(rec.empid)
+
+## To create a table via HiveContext
+sqlContext.sql("create table qa.emp1 as select * from qa.emp")
+
+## Create a simple JSON file and move to HDFS
+{"empid":10, "empname":"kumar"}
+{"empid":20, "empname":"James"}
+{"empid":30, "empname":"Sam"}
+{"empid":40, "empname":"Dinesh"}
+{"empid":50, "empname":"Dhiya"}
+{"empid":60, "empname":"Sachein"}
+{"empid":70, "empname":"Sumi"}
+{"empid":80, "empname":"Johnson"}
+
+## LOAD JSON file into RDD
+from pyspark  import SQLContext
+sqlContext = SQLContext(sc)
+empJSON = sqlContext.jsonFile("/user/saranvisa/scala-sbt-input/empjson.json")
+empJSON.registerTempTable("empjson_tbl")  # We need to create a TempTable because this is NOT a hive table
+empJSON1 = sqlContext.sql("select * from empjson_tbl")
+for rec in empJSON1.collect():
+...   print(rec)
+sqlContext.sql("select * from empjson_tbl").toJSON().saveAsTextFile("/user/saranvisa/scala-sbt-output/empjson")
+
+
+## To save hive table as JSON file
+from pyspark.sql import HiveContext
+sqlContext = HiveContext(sc)
+dataRDD = sqlContext.sql("select * from qa.emp")
+dataRDD.toJSON().saveAsTextFile("/user/saranvisa/scala-sbt-output/empjson1")
+
+##################################################################################################### Chapter 5 ########
+
+http://www.itversity.com/topic/word-count-using-pyspark/
+
+TOPICS: 
+=======
+1. WORD COUNT of TEXTFILE using PYSPARK
+
+## 1. WORD COUNT of TEXTFILE using PYSPARK
+
+## THE INPUT FILE FOR WORD COUNT
+[saranvisa@gw01 ~]$ hdfs dfs -cat /user/saranvisa/scala-sbt-input/hadoop_textfile.txt
+Hadoop is an open-source software framework for storing data and running applications on clusters of commodity hardware. It provides massive storage for any kind of data, enormous processing power and the ability to handle virtually limitless concurrent tasks or jobs.
+
+>>> dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/hadoop_textfile.txt")
+>>> dataFlatMapRDD = dataRDD.flatMap(lambda x: x.split(" "))
+>>> for rec in dataFlatMapRDD.collect():
+...   print(rec)
+...
+
+##Ex: Output , splitted all words to each line for a word
+Hadoop
+is
+an
+open-source
+software
+framework
+for
+storing
+data
+.......
+
+>>> dataMapRDD = dataFlatMapRDD.map(lambda x:(x,1))
+##Ex: Output , assigned the value 1 for each word
+(u'Hadoop', 1)
+(u'is', 1)
+(u'an', 1)
+(u'open-source', 1)
+(u'software', 1)
+(u'framework', 1)
+(u'for', 1)
+(u'storing', 1)
+(u'data', 1)
+.......
+
+>>> dataReduceByKeyRDD = dataMapRDD.reduceByKey(lambda x,y:x+y)
+>>> for rec in dataReduceByKeyRDD.collect():
+...   print(rec)
+...
+##Ex: Output , kind of group by word and count the number
+(u'and', 2)
+(u'enormous', 1)
+(u'handle', 1)
+(u'power', 1)
+(u'for', 2)
+
+## To save the output
+>>>dataReduceByKeyRDD.saveAsTextFile("/user/saranvisa/scala-sbt-output/py_wordcount")
+
+
+##################################################################################################### Chapter 6 ########
+
+http://www.itversity.com/topic/joining-disparate-data-sets-using-pyspark/
+
+TOPICS: 
+=======
+1. How does MAP works in general?
+2. Join disparate datasets together using Spark
+3. Aggregate after joining data
+
+1. How does MAP works in general?
+===================================
+>>> from pyspark import SparkContext
+>>> ordersRDD = sc.textFile("/user/saranvisa/scala-sbt-input/orders")
+
+
+
+## To get a single column
+>>> ordersMap1 = ordersRDD.map(lambda x: x.split(",")[0])
+>>> for rec in ordersMap1.take(5):
+...   print(rec)
+# Output:
+1
+2
+3
+4
+5
+
+## To get a single column + the full record. Use 
+>>> ordersMap1 = ordersRDD.map(lambda x: (x.split(",")[0], x))
+>>> for rec in ordersMap1.take(5):
+...   print(rec)
+# Output:
+(u'1', u'1,2013-07-25 00:00:00.0,11599,CLOSED')
+(u'2', u'2,2013-07-25 00:00:00.0,256,PENDING_PAYMENT')
+(u'3', u'3,2013-07-25 00:00:00.0,12111,COMPLETE')
+(u'4', u'4,2013-07-25 00:00:00.0,8827,CLOSED')
+(u'5', u'5,2013-07-25 00:00:00.0,11318,COMPLETE')
+
+
+## To get multiple columns (ususally 2 cols) in Tuple in Circular bracket
+## WITHOUT Cast the order_id into INT
+>>> ordersMap2 = ordersRDD.map(lambda x: (x.split(",")[0], x.split(",")[1]))
+>>> for rec in ordersMap2.take(5):
+...   print(rec)
+# Output:
+(u'1', u'2013-07-25 00:00:00.0')
+(u'2', u'2013-07-25 00:00:00.0')
+(u'3', u'2013-07-25 00:00:00.0')
+(u'4', u'2013-07-25 00:00:00.0')
+(u'5', u'2013-07-25 00:00:00.0')
+
+
+## WITH Cast the order_id into INT
+>>> ordersMap3 = ordersRDD.map(lambda x: (int(x.split(",")[0]), x.split(",")[1]))
+>>> for rec in ordersMap3.take(5):
+...   print(rec)
+# Output: 
+(1, u'2013-07-25 00:00:00.0')
+(2, u'2013-07-25 00:00:00.0')
+(3, u'2013-07-25 00:00:00.0')
+(4, u'2013-07-25 00:00:00.0')
+(5, u'2013-07-25 00:00:00.0')
+
+
+2. Join disparate datasets together using Spark
+===============================================
+## About DataModel: 
+1. Two files Orders and Order_Items
+2. In Orders, 
+	a. order_id is the primary key and 1st column
+	b. date is the 2nd column
+	c. status is the 4th column (Complete, Closed, processing, pending_payment, pending)
+3. In Order_Items is the chid table, 
+	a. order_item_id is the primary key and 1st column. 
+	b. order_item_order_id is the foreign key to orders.order_id and 2nd column
+	c. quantity is the 4th column
+	d. sub-total is the 5th column
+	e. price is the 6th column
+
+## UseCase:
+## Join disparate datasets together using spark
+## Get the revenu and number of orders on daily basis
+1. Read the data from Orders and Order_Items
+2. Filter only COMPLETE order from Orders table
+3. Extract the key from orders and order_items (using map)
+4. Join the orders and order_items
+5. Get revenue per order item per day
+	
+## Coding:	
+>>> from pyspark import SparkContext
+>>> ordersRDD = sc.textFile("/user/saranvisa/scala-sbt-input/orders")
+>>> orderItemsRDD = sc.textFile("/user/saranvisa/scala-sbt-input/order_items")
+
+## Take the 0th  column in Array, it is order_id
+## To take more than one column using map, use Tuple as follows
+>>> ordersMap = ordersRDD.map(lambda x: (int(x.split(",")[0]), x))
+>>> for rec in ordersMap.take(5):
+...   print(rec)
+# Output: Note: The prefix u stands for text. 
+(1, u'1,2013-07-25 00:00:00.0,11599,CLOSED')
+(2, u'2,2013-07-25 00:00:00.0,256,PENDING_PAYMENT')
+(3, u'3,2013-07-25 00:00:00.0,12111,COMPLETE')
+(4, u'4,2013-07-25 00:00:00.0,8827,CLOSED')
+(5, u'5,2013-07-25 00:00:00.0,11318,COMPLETE')
+
+## Take the 1st column in Array, it is order_id
+>>> orderItemsMap = orderItemsRDD.map(lambda x: (int(x.split(",")[1]), x))   
+>>> for rec in orderItemsMap.take(5):
+...   print(rec)
+# Output:
+(1, u'1,1,957,1,299.98,299.98')
+(2, u'2,2,1073,1,199.99,199.99')
+(2, u'3,2,502,5,250.0,50.0')
+(2, u'4,2,403,1,129.99,129.99')
+(4, u'5,4,897,2,49.98,24.99')
+
+## Join data sets using spark transformation join
+>>> ordersJoinOrderItems = orderItemsMap.join(ordersMap)
+>>> for rec in ordersJoinOrderItems.take(5):
+...   print(rec)
+# Output: 1st Column is Common column, 2nd Column OrderItems, 3rd Column Orders based on the JOIN order mentioned 
+(8192, (u'20459,8192,365,3,179.97,59.99', u'8192,2013-09-14 00:00:00.0,8090,PENDING_PAYMENT'))
+(8192, (u'20460,8192,1004,1,399.98,399.98', u'8192,2013-09-14 00:00:00.0,8090,PENDING_PAYMENT'))
+(12288, (u'30696,12288,403,1,129.99,129.99', u'12288,2013-10-08 00:00:00.0,8250,PENDING_PAYMENT'))
+(4, (u'5,4,897,2,49.98,24.99', u'4,2013-07-25 00:00:00.0,8827,CLOSED'))
+(4, (u'6,4,365,5,299.95,59.99', u'4,2013-07-25 00:00:00.0,8827,CLOSED'))
+
+## NOTE: THE ABOVE OUTPUT is 2 DIMENSIONAL ARRY
+## HOW TO READ THIS TWO DIMENSIONAL ARRAY
+# EX: (8192, (u'20459,8192,365,3,179.97,59.99', u'8192,2013-09-14 00:00:00.0,8090,PENDING_PAYMENT'))
+# Tuple[0] : 8192
+# Tuple[1] : (u'20459,8192,365,3,179.97,59.99', u'8192,2013-09-14 00:00:00.0,8090,PENDING_PAYMENT')
+# To get the first string of Tuple[1]. Use Tuple[1][0]
+# Tuple[1][0] : u'20459,8192,365,3,179.97,59.99'
+# To get the Second string of Tuple[1]. Use Tuple[1][1]
+# Tuple[1][1] : u'8192,2013-09-14 00:00:00.0,8090,PENDING_PAYMENT'
+
+## Get revenue for each order_item per day (output will be only order_date and order_item_subtotal from each record)
+## Get OrderDate : t[1][1].split(",")[1]
+## Get sub-total : float(t[1][0].split(",")[4])
+>>> revenuePerOrderPerDay = ordersJoinOrderItems.map(lambda t: (t[1][1].split(",")[1], float(t[1][0].split(",")[4])))
+>>> for rec in revenuePerOrderPerDay.collect():
+...   print(rec)
+# Output: Date from Orders table & Subtotal from Order_items table
+(u'2013-09-23 00:00:00.0', 200.0)
+(u'2013-09-23 00:00:00.0', 399.98)
+(u'2013-09-23 00:00:00.0', 59.99)
+(u'2013-09-14 00:00:00.0', 129.99)
+(u'2013-09-14 00:00:00.0', 199.99)
+(u'2013-09-30 00:00:00.0', 89.95)
+(u'2013-09-30 00:00:00.0', 129.99)
+(u'2013-09-30 00:00:00.0', 199.99)
+(u'2013-09-14 00:00:00.0', 149.94)
+
+
+3. Aggregate after joining data
+================================
