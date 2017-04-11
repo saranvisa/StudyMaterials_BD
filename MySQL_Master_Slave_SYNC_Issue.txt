@@ -205,14 +205,14 @@ $ dcli -c <bdanode03> service cloudera-scm-server restart  # (and enter the node
 Then On Node 1: dcli -C service cloudera-scm-agent restart
 
 ##############################################################################################################################
-########################################### ISSUE 2 IN DETAIL & ACTION PLAN ##################################################
+########################## ISSUE 2 IN DETAIL & ACTION PLAN (MySQL Master & Slave are NOT in sync) ############################
 ##############################################################################################################################
 
 ## ISSUE 2: MySQL Master & Slave are NOT in sync
 1. SLAVE STATUS				: Check the Slave Status by mysql> "SHOW SLAVE STATUS \G" and get the error message
 2. SLAVE BACKUP				: Either down mysql by stop mysql service and copy files (or) use mysqldump without down mysql
-3. CLONE Master to Slave		: <TBD>
-4. SLAVE STATUS				: 
+3. CLONE Master to Slave	: Refer the document: How to Restore A MySQL Master Which Has Stopped Generating Binary Log Files and/or Reset MySQL Slave Replication With Cluster Downtime on Oracle Big Data Appliance (Doc ID 2237773.1)
+4. SLAVE STATUS				: Repeat the step1
 
 ######################################################### STEP1: SLAVE STATUS  ###############################################
 
