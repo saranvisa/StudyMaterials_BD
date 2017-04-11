@@ -1,0 +1,1509 @@
+HDPCD - Spark Certification  
+Hortonworks Data Platform (HDP)
+
+If you get disconnected at any time, log back in to examslocal.com and attempt to re-launch the exam. The exam proctor will take over from there and assist in getting you back up and running.
+
+https://hortonworks.com/tutorials/
+https://hortonworks.com/services/training/certification/exam-objectives/#hdpcdspark
+https://www.youtube.com/watch?v=dyGABwUMgso&list=PLf0swTFhTI8pgc4wyhT8lIEJCPT08RI3X
+http://discuss.itversity.com/c/certifications/hdpcd-spark
+
+Do NOT buy, just for reference : http://www.validdumps.com/HDPCD-Spark
+Do NOT buy, just for reference : http://www.hadoopexam.com/HORTONWORKS_CERT/What_is_hortonworks_hdpcd_spark_Certification.html
+
+
+#################################################################### About HDCPD-spark Exam ###########################
+
+https://community.hortonworks.com/questions/49270/queries-about-the-hdpcdspark-exam.html
+https://community.hortonworks.com/questions/45535/hdpcd-spark-environment.html
+
+## Number of questions
+The current Spark exam consists of 7 hands-on tasks and you need to get 4 correct to pass. A task either right or wrong - there is no partial credit. If you need experience with Spark on HDP, I recommend candidates work through the Spark tutorials on the Hortonworks Sandbox.
+
+## Regarding the environment of the test, here are the versions:
+HDP 2.4.0
+Spark 1.6
+Scala 2.10.5
+Python 2.7.6 (pyspark)
+You will submit the code in the spark (or python) shell. You can either write a script to a file and then execute the file or type directly on the shell. I hope that this helps.
+
+#################################################################### HDPCD-SPARK : Syllabus ###########################
+
+Core Spark
+===========
+Initialize a Spark application
+Run a Spark job on YARN
+Create an RDD
+Create an RDD from a file or directory in HDFS
+* Persist an RDD in memory or on disk: 
+	1. http://spark.apache.org/docs/latest/programming-guide.html#rdd-persistence
+	2. https://www.youtube.com/watch?v=PB9X-IyzwQk
+	3. https://www.youtube.com/watch?v=dPHrykZL8Cg
+	4. http://sujee.net/2015/01/22/understanding-spark-caching/#.WOlaZtzyuM8
+	
+Perform Spark transformations on an RDD
+Perform Spark actions on an RDD
+*Create and use broadcast variables and accumulators (Shared Variables)
+*Configure Spark properties
+*Write a Spark Core application in Python or Scala
+
+Spark SQL
+===========
+*Perform operations on a DataFrame
+*Write a Spark SQL application
+*Use Hive with ORC from Spark SQL
+*Write a Spark SQL application that reads and writes data from Hive tables
+*Create Spark DataFrames from an existing RDD
+
+ITVersity Learning plan: http://discuss.itversity.com/c/certifications/hdpcd-spark
+=======================
+Step1: Setup Hadoop and Spark Environment as well as IDE
+Learn programming using Scala so that we can build spark based projects using Scala as programming language.
+
+Step2: Prepare for HDPCD Spark using Scala as programming language.
+	a. REPL & Basic programming constructs
+	b. Object Oriented Concepts
+	c. Collections and functional programming on collections
+	d. Creating sbt projects using Eclipse or Intellij
+	
+Step3: Prepare for HDPCD Spark (watch plalist 4th to 9th)
+	a. Getting started with Spark
+	b. Develop word count program
+	c. Execute it on the cluster
+	d. Understanding HDFS briefly
+	e. Develop Spark program to compute daily revenue
+	f. Following are different transformations and actions covered
+	g. map, flatMap, filter
+	h. groupByKey, reduceByKey, aggregateByKey
+	i. actions - collect, take
+	j. Programs are developed using Intellij and built using sbt	
+	
+Step4: prepare for HDPCD Spark - Continued (Watch playlist 10th to 13th)
+	a. Sorting and Ranking using Spark APIs
+		1. top
+		2. sortByKey
+		3. takeOrdered
+		4. groupByKey
+	b. Reading and writing data using different file formats
+	c. Accumulators and Broadcast Variables	
+	
+
+---
+3. Core Spark
+	a. Spark Architecture
+	b. Spark Configuration and Spark Context
+	c. Resilient Distributed Datasets
+	d. Transformations
+	e. Actions
+4. Data Frames and Spark SQL
+	a. Data Frames and Data Frame Operations
+	b. Spark native SQL
+	c. Spark Hive SQL	
+	
+
+
+
+
+#########################################################################################################################################
+#################################################################### TIPS  - General  ##############################
+
+Login:
+$ spark-shell
+$ spark-shell --conf spark.ui.port=22222 --master yarn-client
+$ pyspark
+
+Execution:
+$ spark-submit --class org.apache.spark.examples.SparkPi \
+    --master yarn \
+    --deploy-mode cluster \
+    --driver-memory 4g \
+    --executor-memory 2g \
+    --executor-cores 1 \
+    --queue thequeue \
+    lib/spark-examples*.jar \
+    10
+
+ITVERSITY GistGithub: https://gist.github.com/dgadiraju
+	
+1. In Spark, it is not mandatory to mention the data type. But we need to mention whether it is Mutable/Immutable (Var/Val). 
+2. In Spark, In general, we use more Immutable (never change)	
+3. Once we applied Transformations, it will not be exeucted immediately, It just build the flow and execution only if action applied. This is called Lazy evalution
+4. RDD is nothing but a collection. Each line/record will be considered as an item
+5. We use LAMBDA for Transformations
+6. cat /etc/hadoop/conf/core-site.xml   	## To get the NameSpace/Fully qualified path
+7. ls  /etc/spark/conf						## Spark Configuration Path
+8. cat /etc/spark/conf/spark-defaults.conf	## Spark default Configuration 
+9. To access hive tables, you should have hive-site.xml file, or soft link on Spark configuration path (/etc/spark/conf/hive-site.xml)
+10. To write code, use Object, Class, Function 
+11. setMaster in SparkConf can be used to run the application in YARN, Local or Mesos Mode 
+	Scala : val conf = new SparkConf().steAppName("Test1").setMaster("local") 
+	Python: conf = SparkConf().setMaster("local").setAppName("WineQuality")
+12. Installing Mesos: Spark 1.6.2 is designed for use with Mesos 0.21.0 and does not require any special patches of Mesos.
+13. What is local[4] in, spark-submit --class "SimpleApp" --master local[4] target/scala-2.10/simple-project_2.10-1.0.jar
+	Ans: To run locally with one thread by default, or local[N] to run locally with N threads
+	val conf = new SparkConf().setAppName("test").setMaster("local[*]")
+	local[*] Run Spark locally with as many worker threads as logical cores on your machine.
+14. How to Check 'sbt' availability? Runn the following command: $ sbt 
+15. While executing "sbt package" command getting the following error: <<refer Practice_Spark_Scala_QR.docx - Known Issue>>
+	a. object apache is not a member of package org sbt
+	b. object sql is not a member of package org.apache.spark
+	c. object hive is not a member of package org.apache.spark.sql
+17. Frequently Used plugins in SBT
+	# For Spark core
+	libraryDependencies += "org.apache.spark" %% "spark-core" % "1.6.2"
+	# To pass the arguments from a file, NOTE the version for typesafe
+	libraryDependencies += "com.typesafe" % "config" % "1.3.0"
+	# For SQL
+	libraryDependencies += "org.apache.spark" %% "spark-sql" % "1.6.2"
+	# For Hive
+	libraryDependencies += "org.apache.spark" %% "spark-hive" % "1.6.2"
+
+18. Frequently Used packages to Import
+		import org.apache.spark.SparkConf
+		import org.apache.spark.SparkContext
+		import org.apache.spark.sql.hive.HiveContext
+		import org.apache.spark.sql.hive.orc._
+		import org.apache.spark.sql._
+		
+		# DataFrames:
+		import org.apache.spark.sql.functions._ 
+
+		# To check the hadoop path exists
+		import org.apache.hadoop.fs._
+		val fs = FileSystem.get(sc.hadoopConfiguration)
+		val inputPathExists = fs.exists(new Path(inputPath))
+
+		# RDD Persistence (or) Cache (MEMORY_ONLY, MEMORY_ONLY_SER, etc)
+		import org.apache.spark.storage.StorageLevel._
+		http://sujee.net/2015/01/22/understanding-spark-caching/#.WOlaZtzyuM8
+		
+		
+19. Creating Hive Context
+		Option1:
+		import org.apache.spark.SparkConf
+		import org.apache.spark.SparkContext
+		import org.apache.spark.sql.hive.HiveContext
+
+		val conf = new SparkConf().setAppName("Spark Connect to Hive - emp table")
+		val sc = new SparkContext(conf)
+		val sqlContext = new HiveContext(sc)
+		
+		Option2:
+		import org.apache.spark.SparkConf
+		import org.apache.spark.SparkContext
+		import org.apache.spark.sql._
+
+		val conf = new SparkConf().setAppName("Spark Connect to Hive - emp table")
+		val sc = new SparkContext(conf)
+		val hiveContext = new org.apache.spark.sql.hive.HiveContext(sc)
+20. how to read a csv file? Ans: Use textFile on sparkcontext as follows
+		val yahoo_stocks = sc.textFile("hdfs://sandbox.hortonworks.com:8020/tmp/yahoo_stocks.csv")	
+
+21. RDD vs DATAFRAME
+		a. RDD uses SparkContext. 	  
+			Ex: 
+			val dataRDD = sc.textFile("user/saranvisa/scala-sbt-input/empid.txt")
+			dataRDD.collect().foreach(println)
+			
+		b. DATAFRAME uses sqlContext. 
+			Ex: 
+			import org.apache.spark.sql.functions._ 
+			val df = sqlContext.textFile("people.txt")
+			val df = sqlContext.jsonFile("people.json")
+			df.show
+			df.select(df("name"), df("age") + 1).show()    # To increase the column value
+
+22. Frequently Used File formats
+		a. textFile
+		b. jsonFile
+		c. sequenceFile
+		d. objectFile
+		e. hadoopFile		## For OLD API
+		f. newAPIHadoopFile	## For NEW API
+		
+23. Hadoop has two APIs (OLD & NEW): 
+		a. OLD API : org.apache.hadoop.mapred
+		b. NEW API : org.apache.hadoop.mapreduce
+		
+		14th min of https://www.youtube.com/watch?v=UPMGipRS_-E&list=PLf0swTFhTI8pgc4wyhT8lIEJCPT08RI3X&index=40
+		http://hadoopbeforestarting.blogspot.com/2012/12/difference-between-hadoop-old-api-and.html
+
+24. Create Tuple (KEY,VALUE) using map in order to JOIN two RDDs
+		val dataOrderTUP 	= dataOrderCMP.map(rec => (rec.split(",")(0).toInt,rec.split(",")(1)))
+		val orderItemsTUP 	= orderItems.map(rec => (rec.split(",")(1).toInt,rec.split(",")(4).toFloat))
+		val orderJOIN 		= orderItemsTUP.join(dataOrderTUP)
+		
+25. sortByKey Can be applied on Tuple (Key, Value)		
+26.	groupByKey is more generic function and it does not use combiner. It is more appropriate to use for complex group transformations such as sorting
+    and ranking. 
+		a. It does not use Combiner & Reducer logic	
+		b. It is Suitable for sorting and ranking
+27. reduceByKey is more appropriate function to aggregate the data for current scenario used in the below usecases. 
+		a. It uses Combiner & Reducer logic
+		b. It is suitable when both Combiner & Reducer logic are same. It means Input value & Outoupt Value are same
+28. aggregateByKey is used in the scenarios where we have different logic for combiner and reducer
+		a. It uses Combiner & Reducer logic
+		b. It is suitable when both Combiner & Reducer logic are different. It means Input value & Outoupt Value are different
+		c. https://www.youtube.com/watch?v=xh3uEop3nvI&index=50&list=PLf0swTFhTI8pgc4wyhT8lIEJCPT08RI3X
+
+29. Supporting Join Types in Tuple
+	a.	join
+	b.	leftOuterJoin
+	c.	rightOuterJoin
+	d.	fullOuterJoin
+30. 
+
+##############################################################################   PENDING ##################################
+1. case class 
+2. Data frames
+	https://hortonworks.com/hadoop-tutorial/a-lap-around-apache-spark/
+3. ORC
+	https://hortonworks.com/hadoop-tutorial/using-hive-with-orc-from-apache-spark/
+
+4. Apache Spark - Scala - Externalizing Parameters (To pass arguments from a file)
+https://www.youtube.com/watch?v=ln4dpChqJPI&list=PLf0swTFhTI8pgc4wyhT8lIEJCPT08RI3X&index=35
+
+	# To pass the arguments from a file, NOTE the version for typesafe
+	libraryDependencies += "com.typesafe" % "config" % "1.3.0"
+
+5. Practice: http://discuss.itversity.com/t/find-the-following-from-the-given-products-csv-for-those-who-are-preparing-for-cca175/2516	
+6. Environment Setup & Practice:
+	https://community.hortonworks.com/questions/64278/hdpcd-spark-certification.html
+
+##############################################################################   SPARK  INTRODUCTION ##################################
+
+SPARK INTRODUCTION
+1. Create RDD for Parallelized Collections
+2. Cluster Mode
+3. Different Modules in spark
+4. Create a Simple Spark Program
+5. About Spark Conf
+6. About Spark Context
+7. 
+
+
+
+########################################################   RDD - Resilient Distributed Datasets ##################################
+
+## There are two ways to create RDDs: parallelizing an existing collection in your driver program, or referencing a dataset in an external storage system, such as a shared filesystem, HDFS, HBase, or any data source offering a Hadoop InputFormat
+
+# First Way:
+val data = Array(1, 2, 3, 4, 5)
+val dataRDD = sc.parallelize(data)
+
+# Second Way:
+val dataRDD = sc.textFile("hdfs://nn01.itversity.com:8020/user/saranvisa/scala-sbt-input/empid.txt")
+
+
+## Spark based collection:
+1. Array
+val data = Array(1,2,3,4,5)
+2. List
+val data = List(1,2,3,4,5)
+
+## Spark based Collections:
+3. RDD on parallelize Collections
+scala> val dataRDD = sc.parallelize(data)		## Use the above Array/List called data to create dataRDD
+
+scala> dataRDD.reduce((acc,value) => acc+value) ## Use reduce to sum the value 
+res4: Int = 15
+
+## Created a file in local called empid.txt with 6 records
+1000
+1001
+1002
+1003
+1004
+1005
+
+
+
+
+## READ LOCAL DATA: Create RDD for external data sets on "OS/local" file system
+## Note: If using a path on the "local filesystem", the file must also be accessible at the same path on worker nodes. Either copy the file to all workers or use a network-mounted shared file system
+scala> val dataRDD = sc.textFile("file:///home/saranvisa/empid.txt")
+dataRDD: org.apache.spark.rdd.RDD[String] = file:///home/saranvisa/empid.txt MapPartitionsRDD[8] at textFile at <console>:27
+## NOTE: refer the above line, All the records will be considered as RDD[String], so for Numeric calculation, you need to cast it
+
+scala> dataRDD.count()
+res7: Long = 6
+
+scala> dataRDD.reduce((acc,value) => acc+value)
+res9: String = 100010011002100310041005
+
+scala> dataRDD.map(rec=>rec.toInt).reduce((acc,value) => acc+value)
+res8: Int = 6015
+
+## READ HDFS DATA: Create RDD for the data from HDFS
+scala>val dataRDD = sc.textFile("hdfs://nn01.itversity.com:8020/user/saranvisa/scala-sbt-input/empid.txt")
+
+#empid.txt has value as follows
+1000
+1001
+1002
+1003
+1004
+1005
+
+scala> dataRDD.reduce((a,b) => a+b) 
+res1: String = 100010011002100310041005  	## Result before cast to Int
+
+scala> dataRDD.map(x=>x.toInt).reduce((a,b)=> a+b)
+res3: Int = 6015							## Result after cast to Int
+
+
+
+###########################################################  Cluster Modes in Spark ##################################
+
+## Different Cluster Modes: 
+# For Development
+1. Local Mode: For Development. Only One JVM will be created, it will take care of exeucting end-to-end Spark
+2. Standalone: We can use it to troubleshoot some issues
+
+# For Production
+3. YARN: It will be little bit slower. It is also has some advantages like divide the work between MapReduce and Spark
+4. Mesos: If you have only Spark and not using MapReduce then Mesos is the right option
+
+##YARN
+./bin/spark-submit --class org.apache.spark.examples.SparkPi \
+    --master yarn \
+    --deploy-mode cluster \
+    --driver-memory 4g \
+    --executor-memory 2g \
+    --executor-cores 1 \
+    --queue thequeue \
+    lib/spark-examples*.jar \
+    10
+	
+# To launch a Spark application in client mode, do the same, but replace cluster with client. The following shows how you can run spark-shell in client mode:
+$ ./bin/spark-shell --master yarn --deploy-mode client
+
+## Mesos
+val conf = new SparkConf().setMaster("mesos://HOST:5050").setAppName("My app").set("spark.executor.uri", "<path to spark-1.6.2.tar.gz uploaded above>")
+val sc = new SparkContext(conf)
+
+./bin/spark-submit \
+  --class org.apache.spark.examples.SparkPi \
+  --master mesos://207.184.161.138:7077 \
+  --deploy-mode cluster
+  --supervise
+  --executor-memory 20G \
+  --total-executor-cores 100 \
+  http://path/to/examples.jar \
+  1000
+
+########################################################   Different Modules in Spark ##################################
+
+## Different Modules
+1. Core Spark 					## For Transformations & Actions
+2. Data Frames, Data Sets, SQL: ## To define structure to Data. Integration of RDD with SQL by creating structure at run time. 
+3. Spark Streaming				## It takes data from other sources like Flume/Kafka and process as part of analysis and store in target
+4. MLLib						## Machine Learning Libraries algorithm
+5. GraphX						## for Graph
+6. Bagel						## Based on Google, for Graph. Either use GraphX or Bagel
+7. Spark-R						## New option in Spark
+
+
+########################################################   Create a simple Spark Program ##################################
+
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkConf
+
+scala> object SimpleApp {
+     | def main(args:Array[String]) {
+     | val conf = new SparkConf().setAppName("scaka spark -kum").setMaster(args(0))
+     | val sc   = new SparkContext(conf)
+     | val vList= List(1,2,3,4,5)
+     | val dataRDD = sc.parallelize(vList)
+     | dataRDD.saveAsTextFile(args(1))
+     | }
+     | }
+defined module SimpleApp
+
+########################################################   About Spark Conf ##################################
+
+## Spark Configuration Path: cat /etc/spark/conf/spark-defaults.conf
+
+import org.apache.spark.SparkConf		
+val conf = new SparkConf().setAppName("My First Program").setMaster("local")
+for (i <- conf.getAll) {
+	println(i)
+}
+
+Result
+spark.master,local
+spark.appname,My First Program
+
+########################################################   About Spark Context ##################################
+
+## Spark Configuration Path: cat /etc/spark/conf/spark-defaults.conf
+
+# Different Contexts
+1. local
+2. yarn-client   ## Refer above, Cluster modes
+3. Mesos-URL
+4. Spark-URL (Spark standalone)
+
+import org.apache.spark.SparkConf		
+import org.apache.spark.SparkContext
+val conf = new SparkConf().setAppName("My First Program").setMaster("local")
+val conf = new SparkConf().setAppName("My First Program").setMaster("yarn-client")
+val conf = new SparkConf().setAppName("My First Program").setMaster("mesos-URL")
+val conf = new SparkConf().setAppName("My First Program").setMaster("spark-URL")
+val conf = new SparkConf().setMaster("mesos://HOST:5050").setAppName("My app").set("spark.executor.uri", "<path to spark-1.6.2.tar.gz uploaded above>")
+val sc = new SparkContext(conf)
+
+########################################################   About Actions  ##################################
+
+scala> val dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/empid_name.txt")
+dataRDD: org.apache.spark.rdd.RDD[String] = /user/saranvisa/scala-sbt-input/empid_name.txt MapPartitionsRDD[11] at textFile at <console>:27
+
+scala> dataRDD.count()						## Count
+res8: Long = 7
+
+scala> dataRDD.collect()					## Collect
+res11: Array[String] = Array(1000,kumar, 1001,Raj, 1003,Adam, 1004,Alex, 1005,Jose, 1006,kumar, 1007,Alex)
+
+scala> dataRDD.first()						## first used to take the header
+res12: String = 1000,kumar
+
+scala> dataRDD.take(3)						## take
+res13: Array[String] = Array(1000,kumar, 1001,Raj, 1003,Adam)
+
+scala> dataRDD.collect().foreach(println)	## foreach on collect
+1000,kumar
+1001,Raj
+1003,Adam
+1004,Alex
+1005,Jose
+1006,kumar
+1007,Alex
+
+scala>  dataRDD.cache()						## Cache
+res33: dataRDD.type = /user/saranvisa/scala-sbt-input/empid_name.txt MapPartitionsRDD[38] at textFile at <console>:28
+
+
+########################################################   About Transformations  ############################
+
+### Transformation used to filter the data
+scala> val dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/empid_name.txt")
+dataRDD: org.apache.spark.rdd.RDD[String] = /user/saranvisa/scala-sbt-input/empid_name.txt MapPartitionsRDD[11] at textFile at <console>:27
+
+scala> dataRDD.collect().foreach(println)
+1000,kumar
+1001,Raj
+1003,Adam
+1004,Alex
+1005,Jose
+1006,kumar
+1007,Alex
+
+## filter using Contains
+scala> dataRDD.filter(x => x.contains("kumar")).foreach(println)	
+1000,kumar
+1006,kumar
+
+## filter using "=="
+scala> dataRDD.filter(x => x.split(",")(1) == "kumar").foreach(println) 
+1006,kumar
+1000,kumar
+
+## filter the header using mapPartitionsWithIndex
+val noheaderRDD = dataRDD.mapPartitionsWithIndex((idx,iter) => if (idx==0) iter.drop(1) else iter )	
+
+scala> noheaderRDD.collect().foreach(println)
+1001,Raj
+1003,Adam
+1004,Alex
+1005,Jose
+1006,kumar
+1007,Alex
+
+
+
+########################################################   UseCase1: Simple App  ##################################
+
+https://spark.apache.org/docs/1.6.2/quick-start.html
+
+$ mkdir SimpleProject
+$ cd SimpleProject/
+
+# vi simple.sbt		
+name := "Simple Project"
+version := "1.0"
+scalaVersion := "2.10.5"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "1.6.2"
+
+
+
+
+$ mkdir -p src/main/scala
+$ cd src/main/scala
+
+# vi SimpleApp.scala:
+/* SimpleApp.scala */
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
+import org.apache.spark.SparkConf
+
+object SimpleApp {
+  def main(args: Array[String]) {
+    val logFile = "/user/saranvisa/scala-sbt-input/empid_name.txt"
+    val conf = new SparkConf().setAppName("Simple Application")
+    val sc = new SparkContext(conf)
+    val logData = sc.textFile(logFile, 2).cache()
+    val numAs = logData.filter(line => line.contains("a")).count()
+    val numBs = logData.filter(line => line.contains("b")).count()
+    println("Lines with a: %s, Lines with b: %s".format(numAs, numBs))
+  }
+}
+
+$ cd ../../..  # back to SimpleApp directory
+
+$ sbt package  # jar will be created under target/scala-2.10
+
+$ spark-submit \
+> --class SimpleApp \
+> --master local \
+> target/scala-2.10/simple-project_2.10-1.0.jar
+
+# Output
+Multiple versions of Spark are installed but SPARK_MAJOR_VERSION is not set
+Spark1 will be picked by default
+Lines with a: 4, Lines with b: 0
+
+
+
+######################################   UseCase2: Word Count (Pass parameters for input/output)  ##################################
+
+## CODE in COMMAND LINE 
+scala> val dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/empid_name.txt")
+dataRDD: org.apache.spark.rdd.RDD[String] = /user/saranvisa/scala-sbt-input/empid_name.txt MapPartitionsRDD[11] at textFile at <console>:27
+
+scala> val wcRDD = dataRDD.flatMap(x => x.split(",")).map(x => (x,1)).reduceByKey((x,y) => x+y)
+wcRDD: org.apache.spark.rdd.RDD[(String, Int)] = ShuffledRDD[19] at reduceByKey at <console>:29
+
+scala> wcRDD.collect().foreach(println)
+(1005,1)
+(1001,1)
+(Alex,2)
+(kumar,2)
+(1003,1)
+(1007,1)
+(Adam,1)
+(Raj,1)
+(1000,1)
+(1004,1)
+(1006,1)
+(Jose,1)
+
+## CODE in SHELL
+# Make sure sbt has already been installed by running command $ sbt
+
+$ mkdir WordCount
+$ cd WordCount/
+
+## vi wordcount.sbt
+name := "Word Count"
+version := "1.0"
+scalaVersion := "2.10.5"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "1.6.2"
+libraryDependencies += "com.typesafe" % "config" % "1.3.0"
+
+$ mkdir -p src/main/scala
+$ cd src/main/scala
+ 
+# vi WordCount.scala
+
+package wordCount
+
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
+
+object wrdCount{
+	def main (args:Array[String]) {
+		val conf = new SparkConf().setAppName("word count")
+		val sc = new SparkContext(conf)
+		val inputPath = args(0)
+		val outputPath = args(1)
+		
+		## inputPath = /user/saranvisa/scala-sbt-input/word_count.txt
+		val dataRDD = sc.textFile(inputPath)
+		val wc = dataRDD.flatMap(x=> x.split(",")).map(x=>(x,1)).reduceByKey((x,y)=>x+y)
+		wc.collect().foreach(println)
+	}
+}
+
+$ cd ../../..  # back to WordCount directory
+
+$ sbt package  # jar will be created under target/scala-2.10
+
+$ spark-submit \
+--class wrdCount \
+--master local \
+target/scala-2.10/word-count_2.10-1.0.jar
+
+# Output:
+Spark1 will be picked by default
+(1005,1)
+(Adam,1)
+(1001,1)
+(Raj,1)
+(1000,1)
+(Alex,2)
+(kumar,2)
+(1004,1)
+(1006,1)
+(1003,1)
+(1007,1)
+(Jose,1)
+
+
+
+#####################################   UseCase3: find the line with the most words  ##################################
+
+## ReduceByKey vs Reduce
+a.	ReduceByKey is a Transformation, like groupby 
+b.	Reduce is an Action. To sum the value
+
+scala> val dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/words1.txt")
+dataRDD: org.apache.spark.rdd.RDD[String] = /user/saranvisa/scala-sbt-input/words1.txt MapPartitionsRDD[25] at textFile at <console>:27
+
+scala> dataRDD.collect().foreach(println) ## 5th line has most words
+one
+two words
+there are three
+four words are available
+you can find five words
+
+## Method 1: 
+scala> dataRDD.map(x => x.split(" ").size).reduce((a,b) => if (a>b) a else b)
+res26: Int = 5
+
+## Method 2: Using Math
+scala> import java.lang.Math
+import java.lang.Math
+
+scala> dataRDD.map(x=> x.split(" ").size).reduce((a,b) => Math.max(a,b))
+res27: Int = 5
+
+
+###########################   UseCase4: Using Transformations (map, reduceByKey), Action, List, Array, etc  #######################
+## map
+scala> val lst = List(1,2,3,4)
+lst: List[Int] = List(1, 2, 3, 4)
+
+scala> lst.map(x=> x*2)
+res5: List[Int] = List(2, 4, 6, 8)
+
+
+###########################   UseCase5: Sequence File (KEY, VALUE)  ###############################################################
+
+1. Cannot read a text file as sequence file, so read a text file and write it into to sequence file then read it as sequence file. 
+2. Pre-request:  that the source should be already a sequence file
+
+scala> import org.apache.spark.SparkContext, org.apache.spark.SparkConf
+scala> import org.apache.hadoop.mapreduce.lib.output
+scala> import org.apache.hadoop.mapreduce.lib.output._
+scala> import org.apache.hadoop.io._
+
+scala> val dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/empid_name.txt")
+
+## If you don't know the KEY column, then consider NULL as key
+scala> dataRDD.map(rec => (NullWritable.get(),rec)).foreach(println)
+((null),1005,Jose)
+((null),1000,kumar)
+((null),1006,kumar)
+((null),1001,Raj)
+((null),1007,Alex)
+((null),1003,Adam)
+((null),1004,Alex)
+
+## If you know the KEY column
+scala> dataRDD.map(rec => (rec.split(",")(0),rec.split(",")(1))).foreach(println)
+(1005,Jose)
+(1006,kumar)
+(1000,kumar)
+(1007,Alex)
+(1001,Raj)
+(1003,Adam)
+(1004,Alex)
+
+## To Write a file as Sequence File
+scala> dataRDD.map(rec => (rec.split(",")(0),rec.split(",")(1))).saveAsSequenceFile("/user/saranvisa/scala-sbt-input/empid_name_seq")
+
+$ hdfs dfs -ls /user/saranvisa/scala-sbt-input/empid_name_seq
+
+## To Read a sequence file
+scala> val path = "/user/saranvisa/scala-sbt-input/empid_name_seq"
+scala> sc.sequenceFile(path,classOf[IntWritable],classOf[Text]).map(rec => rec.toString()).collect().foreach(println)
+(1000,kumar)
+(1001,Raj)
+(1003,Adam)
+(1004,Alex)
+(1005,Jose)
+(1006,kumar)
+(1007,Alex)
+
+		
+
+#######################################  UseCase5: JSON file        ############################################################## 		
+		
+#######################################  UseCase6: Invoke a function ############################################################## 		
+
+scala> def sum(a:Int, b:Int):Int=a+b
+sum: (a: Int, b: Int)Int
+
+scala> sum(3,5)
+res6: Int = 8
+
+#######################################  UseCase7: Spark to Hive connect (emp table) ############################################### 		
+
+## CODE in SHELL
+# Make sure sbt has already been installed by running command $ sbt
+
+$ mkdir HiveEmp
+$ cd HiveEmp/
+
+## vi hiveemp.sbt
+name := "Hive Emp"
+version := "1.0"
+scalaVersion := "2.10.5"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "1.6.2"
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "1.6.2"
+libraryDependencies += "org.apache.spark" %% "spark-hive" % "1.6.2"
+
+
+$ mkdir -p src/main/scala
+$ cd src/main/scala
+ 
+$ vi HiveEmp.scala
+object HiveEmp {
+   def main(args:Array[String]) {
+
+      import org.apache.spark.SparkConf
+      import org.apache.spark.SparkContext
+      import org.apache.spark.sql.hive.HiveContext
+
+      val conf = new SparkConf().setAppName("Spark Connect to Hive - emp table")
+      val sc = new SparkContext(conf)
+      val sqlContext = new HiveContext(sc)
+
+      val dataRDD = sqlContext.sql("select * from qa.emp")
+      dataRDD.collect().foreach(println)
+
+ }
+}
+
+$ cd ../../..  # back to HiveEmp directory
+
+$ sbt package  # jar will be created under target/scala-2.10
+
+$ spark-submit \
+> --class HiveEmp \
+> --master local \
+> target/scala-2.10/hive-emp_2.10-1.0.jar
+Multiple versions of Spark are installed but SPARK_MAJOR_VERSION is not set
+Spark1 will be picked by default
+[10,kumar]
+[20,James]
+[30,Sam]
+[40,Dinesh]
+[50,Diya]
+[60,Sachein]
+[70,Sumi]
+
+## Hive version
+hive> select * from qa.emp;
+OK
+10      kumar
+20      James
+30      Sam
+40      Dinesh
+50      Diya
+60      Sachein
+70      Sumi
+Time taken: 1.835 seconds, Fetched: 7 row(s)
+
+
+#######################################  UseCase8: To remove header ############################################################## 		
+
+scala> val dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/empid_name_header.txt")
+dataRDD: org.apache.spark.rdd.RDD[String] = /user/saranvisa/scala-sbt-input/empid_name_header.txt MapPartitionsRDD[1] at textFile at <console>:30
+
+scala> dataRDD.collect().foreach(println)
+id,name
+1000,kumar
+1001,Raj
+1003,Adam
+1004,Alex
+1005,Jose
+1006,kumar
+1007,Alex
+
+scala> val noheaderRDD = dataRDD.mapPartitionsWithIndex((idx,iter) => if (idx==0) iter.drop(1) else iter )
+noheaderRDD: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[2] at mapPartitionsWithIndex at <console>:32
+
+scala> noheaderRDD.collect().foreach(println)
+1000,kumar
+1001,Raj
+1003,Adam
+1004,Alex
+1005,Jose
+1006,kumar
+1007,Alex
+
+
+#######################################  UseCase10: ORDERS & ORDER_ITEMS #####################################################
+orders1
+1,2013-11-09 00:00:00.0,8326,COMPLETE
+2,2013-11-09 00:00:00.0,5729,COMPLETE
+3,2013-11-09 00:00:00.0,1870,CLOSED
+4,2013-11-09 00:00:00.0,2366,PENDING
+5,2013-11-10 00:00:00.0,5723,COMPLETE
+
+order_items1
+1,1,502,3,150.3,50.1
+2,1,503,2,22.6,11.3
+3,3,504,1,30.1,30.1
+4,4,505,1,50.2,50.2
+5,5,506,2,20.2,10.1
+6,5,507,3,30.3,10.1
+
+scala> val dataOrder = sc.textFile("/user/saranvisa/scala-sbt-input/orders1")
+scala> val dataOrderCMP = dataOrder.filter(rec => rec.split(",")(3) == "COMPLETE")
+dataOrderCMP: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[12] at filter at <console>:29
+
+scala> dataOrderCMP.foreach(println)
+5,2013-11-10 00:00:00.0,5723,COMPLETE
+1,2013-11-09 00:00:00.0,8326,COMPLETE
+2,2013-11-09 00:00:00.0,5729,COMPLETE
+
+## Create Tuple (KEY,VALUE) from order on COMPLETE orders where KEY=order_id and VALUE=order_date. This will help to JOIN
+scala> val dataOrderTUP = dataOrderCMP.map(rec => (rec.split(",")(0).toInt,rec.split(",")(1)))
+dataOrderTUP: org.apache.spark.rdd.RDD[(Int, String)] = MapPartitionsRDD[8] at map at <console>:31
+
+scala> dataOrderTUP.foreach(println)
+(1,2013-11-09 00:00:00.0)
+(2,2013-11-09 00:00:00.0)
+(5,2013-11-10 00:00:00.0)
+
+scala> val orderItems = sc.textFile("/user/saranvisa/scala-sbt-input/order_items1")
+
+## Create a Tuple (KEY,VALUE) from Order_items where KEY=order_id and VALUE=order_item_subtotal
+scala> val orderItemsTUP = orderItems.map(rec => (rec.split(",")(1).toInt,rec.split(",")(4).toFloat))
+orderItemsTUP: org.apache.spark.rdd.RDD[(Int, Float)] = MapPartitionsRDD[7] at map at <console>:29
+
+scala> val orderItemsTUP1 = orderItemsTUP.reduceByKey((acc,value) => (acc+value))
+orderItemsTUP1: org.apache.spark.rdd.RDD[(Int, Float)] = ShuffledRDD[9] at reduceByKey at <console>:31
+
+## Result after reduceByKey
+scala> orderItemsTUP1.foreach(println)
+(4,50.2)
+(1,172.90001)
+(3,30.1)
+(5,50.5)
+
+scala> val orderJOIN = orderItemsTUP1.join(dataOrderTUP)
+orderJOIN: org.apache.spark.rdd.RDD[(Int, (Float, String))] = MapPartitionsRDD[16] at join at <console>:39
+
+scala> orderJOIN.foreach(println)
+(1,(172.90001,2013-11-09 00:00:00.0))
+(5,(50.5,2013-11-10 00:00:00.0))
+
+
+## Discard order_id and get only date & sub-total
+scala> val orderJOINmap = orderJOIN.map(rec => (rec._2._1, rec._2._2))
+
+#######################################  UseCase11: TUPLE & UNDERSCORE NOTATIONs #####################################################
+
+## Nested Tuple. Because VALUE has another Tuple
+scala> orderJOIN1.collect().foreach(println)
+(1,(150.3,2013-11-09 00:00:00.0))
+(1,(22.6,2013-11-09 00:00:00.0))
+(5,(20.2,2013-11-10 00:00:00.0))
+(5,(30.3,2013-11-10 00:00:00.0))
+
+## Use Underscore Notation to get values from Tuple
+scala> orderJOIN1.filter(rec => rec._1 ==1).collect().foreach(println)
+(1,(150.3,2013-11-09 00:00:00.0))
+(1,(22.6,2013-11-09 00:00:00.0))
+
+## KEY = _1 , VALUE = _2._1 and _2._2
+scala> orderJOIN1.map(rec => rec._1.toString + ',' +  rec._2._1.toString + ',' + rec._2._2.toString).collect().foreach(println)
+1,150.3,2013-11-09 00:00:00.0
+1,22.6,2013-11-09 00:00:00.0
+5,20.2,2013-11-10 00:00:00.0
+5,30.3,2013-11-10 00:00:00.0
+
+#######################################  UseCase12: sortByKey #####################################################
+
+# Can be applied on Tuple (Key, Value)
+scala> orderJOIN1.sortByKey().collect().foreach(println)
+(1,(150.3,2013-11-09 00:00:00.0))
+(1,(22.6,2013-11-09 00:00:00.0))
+(5,(20.2,2013-11-10 00:00:00.0))
+(5,(30.3,2013-11-10 00:00:00.0))
+
+scala> orderJOIN1.sortByKey(false).collect().foreach(println)
+(5,(20.2,2013-11-10 00:00:00.0))
+(5,(30.3,2013-11-10 00:00:00.0))
+(1,(150.3,2013-11-09 00:00:00.0))
+(1,(22.6,2013-11-09 00:00:00.0))
+
+
+#####################################  UseCase13: SHARED VARIABLES: BROADCAST & ACCUMULATOR  ##########################
+
+## Create and use broadcast variables and accumulators (Shared Variables)
+
+## ABOUT BROADCAST:
+1. This is an API function on SparkContext(sc), it is a Shared variable
+2. Pass RDD as parameter, collectAsMap is an API 
+val bv = sc.broadcast(productDepartmentsMap.collectAsMap())
+3. To get value from broadcast variable. Ex: Consider bv is a boradcast variable then $ bv.value (or) $println(bv)
+4. Broadcast variables are immutable, that means, BV is readonly, we cannot change the value in BV
+
+# Practical-1:
+ scala> val broadcastVar = sc.broadcast(Array(1, 2, 3))
+ broadcastVar: org.apache.spark.broadcast.Broadcast[Array[Int} = Broadcast(0)
+
+ scala> broadcastVar.value
+ res0: Array[Int] = Array(1, 2, 3)
+ 
+After the broadcast variable is created, it should be used instead of the value v in any functions run on the cluster so that v is not shipped to the nodes more than once. In addition, the object v should not be modified after it is broadcast in order to ensure that all nodes get the same value of the broadcast variable (e.g. if the variable is shipped to a new node later).
+ 
+# Practical-2:
+	# Refer "UseCase14: Join & get data from both emp & dept"
+ 
+ 
+========================
+## ABOUT ACCUMULATOR: 
+1. This is an API function on SparkContext(sc), it is a Shared variable
+2. Something similar to Counter in Java & MapReduce
+3. Create an accumulator variable and use with Transformation. The normal variable will NOT work as accumulator
+Ex:
+scala> val accum = sc.accumulator(0, "My Accumulator")  			## 0 is an initial value
+scala> sc.parallelize(Array(1, 2, 3, 4)).foreach(x => accum += x)
+4. Accumulators do not change the lazy evaluation model of Spark. If they are being updated within an operation on an RDD, their value is only updated once that RDD is computed as part of an action
+5. To get value from accumulator variable. Ex: Consider accum is an accumulator variable then $ accum.value (or) $println(accum)
+
+## Sample Usage
+1. find out how many records had a valid user ID
+2. How many purchases occurred within some time window
+
+## Issues with accumulators: Here are some of the known issues with accumulators
+1. Unless tasks are executed you will not see details about counters
+2. Spark guarantees accumulators to be updated only in first execution
+3. If any task is re-executed the results can be inconsistent
+4. The issue is prevalent in both transformations and actions
+
+
+## Practical-1
+	val data = Array(1, 2, 3, 4, 5)
+	val accum = sc.accumulator(0, "Accumulator value")	## Mention a name for accumulator
+	val dataRDD = sc.parallelize(data).foreach(x => accum += x)
+
+	scala> accum.value
+	res2: Int = 10
+	<or>
+	scala> println(accum)
+	10
+
+
+## Practical-2
+
+    val ordersRDD = sc.textFile("/user/saranvisa/scala-sbt-input/orders")
+	val orderItemsRDD = sc.textFile("/user/saranvisa/scala-sbt-input/order_items")
+
+	# Filter WITHOUT ACCUMULATOR
+    val ordersCompletedBfr = ordersRDD.filter(rec => (rec.split(",")(3) == "COMPLETE"))
+	
+	# Filter WITH ACCUMULATOR
+	val ordersAllAccum = sc.accumulator(0,"Orders All count")
+	val ordersCompleteAccum = sc.accumulator(0,"Orders Completed Accumulator")
+	val orderCompleteAft = ordersRDD.filter(rec=> { 
+	ordersAllAccum += 1
+	if (rec.split(",")(3) == "COMPLETE")
+	{
+	ordersCompleteAccum += 1
+	}
+	(rec.split(",")(3) == "COMPLETE") 
+	})
+
+	# The resul will be 0 until you apply action on RDD. Because it is lazy evaluation
+	scala> println(ordersAllAccum)
+	0
+	scala> println(ordersCompleteAccum)
+	0
+	
+	# Action applied on RDD
+	scala> ordersCompletedAft.count()
+	res7: Long = 5714
+
+	# Accumulator returns the result now
+	scala> println(ordersAllAccum)
+	17221
+
+	scala> println(ordersCompleteAccum)
+	5714
+
+## Practical-3
+	# map WITHTOUT accumulator
+	scala> val dataOrdTupBfr = ordersCompletedBfr.map(rec => (rec.split(",")(0).toInt, rec.split(",")(1)))
+	dataOrdTupBfr: org.apache.spark.rdd.RDD[(Int, String)] = MapPartitionsRDD[5] at map at <console>:35
+
+	scala> dataOrdTupBfr.count()
+	res13: Long = 5714
+
+	scala> dataOrdTupBfr.take(2).foreach(println)
+	(3,2013-07-25 00:00:00.0)
+	(5,2013-07-25 00:00:00.0)
+
+	# map WITH accumulator
+	val dataOrdAccum = sc.accumulator(0,"Order count")
+	val dataOrdTupAft = ordersCompletedAft.map(rec => { 
+	dataOrdAccum += 1
+	(rec.split(",")(0).toInt, rec.split(",")(1))
+	})
+	
+	# before action on RDD
+	scala> dataOrdAccum.value
+	res12: Int = 0
+	
+	scala> dataOrdTupAft.count()
+	res14: Long = 5714
+
+	# after action on RDD
+	scala> dataOrdAccum.value
+	res15: Int = 5714
+
+	
+#######################################  UseCase14: Join & get data from both emp & dept ###################################
+
+# Practical-1: Join emp & dept and save the output in HDFS in the below format
+# Expected output: empid, empname, deptid, deptname
+
+scala> val empRDD = sc.textFile("/user/saranvisa/scala-sbt-input/empid_name_dept.txt")
+empRDD: org.apache.spark.rdd.RDD[String] = /user/saranvisa/scala-sbt-input/empid_name_dept.txt MapPartitionsRDD[3] at textFile at <console>:27
+
+scala> empRDD.collect().foreach(println)
+1000,kumar,10
+1001,Raj,20
+1003,Adam,30
+1004,Alex,10
+1005,Jose,10
+1006,kumar,10
+1007,Alex,40
+
+scala> val deptRDD = sc.textFile("/user/saranvisa/scala-sbt-input/dept.txt")
+deptRDD: org.apache.spark.rdd.RDD[String] = /user/saranvisa/scala-sbt-input/dept.txt MapPartitionsRDD[5] at textFile at <console>:27
+
+scala> deptRDD.collect().foreach(println)
+10,ITEngineer
+20,Support
+30,Manager
+40,ProdSupport
+
+scala> val jobDescRDD = sc.textFile("/user/saranvisa/scala-sbt-input/jobDesc.txt")
+jobDescRDD: org.apache.spark.rdd.RDD[String] = /user/saranvisa/scala-sbt-input/jobDesc.txt MapPartitionsRDD[11] at textFile at <console>:27
+
+scala> jobDescRDD.collect().foreach(println)
+10,ITEngineer should involve in software development
+20,Support engineer role is like a help desk
+30,Manager will coordinate with all the team members and deliver results
+40,ProdSupport people will take care of software after development
+
+
+scala> val empRDDMap = empRDD.map(rec => (rec.split(",")(2), (rec.split(",")(0), rec.split(",")(1))) )
+empRDDMap: org.apache.spark.rdd.RDD[(String, (String, String))] = MapPartitionsRDD[6] at map at <console>:29
+
+scala> empRDDMap.collect().foreach(println)
+(10,(1000,kumar))
+(20,(1001,Raj))
+(30,(1003,Adam))
+(10,(1004,Alex))
+(10,(1005,Jose))
+(10,(1006,kumar))
+(40,(1007,Alex))
+
+scala> val deptRDDMap = deptRDD.map(rec => (rec.split(",")(0), rec.split(",")(1)))
+deptRDDMap: org.apache.spark.rdd.RDD[(String, String)] = MapPartitionsRDD[7] at map at <console>:29
+
+scala> deptRDDMap.collect().foreach(println)
+(10,ITEngineer)
+(20,Support)
+(30,Manager)
+(40,ProdSupport)
+
+
+scala> val empdeptRDD = deptRDDMap.join(empRDDMap)
+empdeptRDD: org.apache.spark.rdd.RDD[(String, (String, (String, String)))] = MapPartitionsRDD[37] at join at <console>:41
+
+scala> empdeptRDD.foreach(println)
+(20,(Support,(1001,Raj)))
+(40,(ProdSupport,(1007,Alex)))
+(30,(Manager,(1003,Adam)))
+(10,(ITEngineer,(1000,kumar)))
+(10,(ITEngineer,(1004,Alex)))
+(10,(ITEngineer,(1005,Jose)))
+(10,(ITEngineer,(1006,kumar)))
+
+
+scala> val empdeptOutputRDD = empdeptRDD.map(rec => rec._2._2._1 + "," + rec._2._2._2 + "," + rec._1 + "," + rec._2._1)
+empdeptOutputRDD: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[14] at map at <console>:37
+
+scala> empdeptOutputRDD.collect().foreach(println)
+1001,Raj,20,Support
+1007,Alex,40,ProdSupport
+1003,Adam,30,Manager
+1000,kumar,10,ITEngineer
+1004,Alex,10,ITEngineer
+1005,Jose,10,ITEngineer
+1006,kumar,10,ITEngineer
+
+scala> val empdeptOutputRDD = empdeptRDD.map(rec => rec._2._2._1 + "," + rec._2._2._2 + "," + rec._1 + "," + rec._2._1).saveAsTextFile("/user/saranvisa/scala-sbt-output/emp_dept")
+empdeptOutputRDD: Unit = ()
+	
+$ hdfs dfs -cat /user/saranvisa/scala-sbt-output/emp_dept/part*
+1001,Raj,20,Support
+1007,Alex,40,ProdSupport
+1003,Adam,30,Manager
+1000,kumar,10,ITEngineer
+1004,Alex,10,ITEngineer
+1005,Jose,10,ITEngineer
+1006,kumar,10,ITEngineer
+	
+## Apply accumulator on this RDD: empdeptRDD.map(rec => rec._2._2._1 + "," + rec._2._2._2 + "," + rec._1 + "," + rec._2._1)	
+
+val empdeptAccum = sc.accumulator(0,"Count the records")
+empdeptRDD.map(rec => { empdeptAccum += 1 
+			rec._2._2._1 + "," + rec._2._2._2 + "," + rec._1 + "," + rec._2._1
+			}).foreach(println)
+1001,Raj,20,Support
+1007,Alex,40,ProdSupport
+1003,Adam,30,Manager
+1000,kumar,10,ITEngineer
+1004,Alex,10,ITEngineer
+1005,Jose,10,ITEngineer
+1006,kumar,10,ITEngineer
+
+scala> empdeptAccum.value
+res9: Int = 7
+
+## Apply broadcast variable on this RDD: empdeptRDD.collect().foreach(println)
+## collectAsMap is working on RDD only after two RDD join ##
+val broadcastVar = sc.broadcast(empdeptRDD.collectAsMap())
+
+scala> broadcastVar.value
+res7: scala.collection.Map[String,(String, (String, String))] = Map(30 -> (Manager,(1003,Adam)), 20 -> (Support,(1001,Raj)), 40 -> (ProdSupport,(1007,Alex)), 10 -> (ITEngineer,(1006,kumar)))
+
+val empdeptjobDescRDD = jobDescRDD.map(rec => (rec.split(",")(0), (broadcastVar.value(rec.split(",")(0)))))
+
+
+#######################################  UseCase15: RDD Persistence or Cache ##########################################
+
+# About Persistence (or) Cache
+1. Storing RDDs in memory
+2. This is very useful when we use the same data repeatedly
+3. It is Lazy evaluation, when we apply cache, it will not be performed until next transformation or action
+
+	# Example for cache: https://www.youtube.com/watch?list=PL-x35fyliRwhKT-NpTKprPW1bkbdDcTTW&v=TtvxKzO9jXE
+	val dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/empid_name.txt")
+	
+	# set RDD into Cache
+	scala> dataRDD.cache()
+	
+	# This action work as normal for the first time
+	scala> dataRDD.count()
+	res1: Long = 7
+	
+	# This action will be performed against in memory dataset
+	scala> dataRDD.count()
+	res2: Long = 7
+
+
+4. Understanding Spark Caching
+http://sujee.net/2015/01/22/understanding-spark-caching/#.WOlaZtzyuM8
+http://spark.apache.org/screencasts/3-transformations-and-caching.html
+
+
+
+
+# 
+import org.apache.spark.storage.StorageLevel._
+
+# Ex for MEMORY_ONLY
+scala> val dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/empid_name.txt")
+dataRDD1: org.apache.spark.rdd.RDD[String] = /user/saranvisa/scala-sbt-input/empid_name.txt MapPartitionsRDD[3] at textFile at <console>:30
+
+scala> dataRDD.persist(MEMORY_ONLY)
+res2: dataRDD1.type = /user/saranvisa/scala-sbt-input/empid_name.txt MapPartitionsRDD[3] at textFile at <console>:30
+
+scala> dataRDD.collect()
+res5: Array[String] = Array(1000,kumar, 1001,Raj, 1003,Adam, 1004,Alex, 1005,Jose, 1006,kumar, 1007,Alex)
+
+========
+# Ex for MEMORY_ONLY_SER
+
+scala> val dataRDD1 = sc.textFile("/user/saranvisa/scala-sbt-input/empid_name.txt")
+dataRDD1: org.apache.spark.rdd.RDD[String] = /user/saranvisa/scala-sbt-input/empid_name.txt MapPartitionsRDD[3] at textFile at <console>:30
+
+scala> dataRDD1.persist(MEMORY_ONLY_SER)
+res2: dataRDD1.type = /user/saranvisa/scala-sbt-input/empid_name.txt MapPartitionsRDD[3] at textFile at <console>:30
+
+scala> dataRDD1.collect()
+res3: Array[String] = Array(1000,kumar, 1001,Raj, 1003,Adam, 1004,Alex, 1005,Jose, 1006,kumar, 1007,Alex)
+
+
+
+
+#######################################  UseCase12: DATA FRAME #####################################################
+
+http://spark.apache.org/docs/1.6.2/sql-programming-guide.html#getting-started
+https://hortonworks.com/hadoop-tutorial/a-lap-around-apache-spark/
+
+[saranvisa@gw01 ~]$ hdfs dfs -cat /user/saranvisa/scala-sbt-input/emp.json/part*
+{"empid":10,"empname":"kumar"}
+{"empid":20,"empname":"James"}
+
+## Data Frames will be performed on sqlContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.functions._ 
+
+val sqlContext = new SQLContext(sc)
+val df = sqlContext.jsonFile("/user/saranvisa/scala-sbt-input/emp.json")  ## Text file option not available, need to check
+
+## To print the Schema
+scala> df.printSchema()
+root
+ |-- empid: long (nullable = true)
+ |-- empname: string (nullable = true)
+
+## To select a particular column
+scala> df.select("empid").show()
++-----+
+|empid|
++-----+
+|   10|
+|   20|
++-----+
+
+## To select a particular column
+scala> df.select("empid","empname").show()
++-----+-------+
+|empid|empname|
++-----+-------+
+|   10|  kumar|
+|   20|  James|
++-----+-------+
+
+## Increment the value of EmpID by 1
+scala> df.select(df("empid")+1, df("empname")).show()
++-----------+-------+
+|(empid + 1)|empname|
++-----------+-------+
+|         11|  kumar|
+|         21|  James|
++-----------+-------+
+
+## To check true or false
+scala> df.select(df("empid") > 10).show()
++------------+
+|(empid > 10)|
++------------+
+|       false|
+|        true|
++------------+
+
+## To apply filter on DATA FRAME
+scala> df.filter(df("empid") > 10).show()
++-----+-------+
+|empid|empname|
++-----+-------+
+|   20|  James|
++-----+-------+
+
+## Apply group by
+scala> df.groupBy("empid").count().show()
++-----+-----+
+|empid|count|
++-----+-----+
+|   10|    1|
+|   20|    1|
++-----+-----+
+
+
+#######################################  UseCase9: DATA SETS #####################################################
+http://spark.apache.org/docs/1.6.2/sql-programming-guide.html#getting-started
+		
+## 1. Datasets are similar to RDDs, however, instead of using Java Serialization they use a specialized "Encoder" to serialize the objects for processing		
+## 2. encoders are code generated dynamically and use a format that allows Spark to perform many operations like filtering, sorting and hashing 
+
+
+
+		
+########################################################   ITVersity Sample Program   ##################################		
+package retail
+
+import org.apache.spark.SparkContext, org.apache.spark.SparkConf
+import com.typesafe.config._
+import org.apache.hadoop.fs._
+
+object AvgRevenueDaily {
+  def main(args: Array[String]) {
+    val appConf = ConfigFactory.load()
+    val conf = new SparkConf().
+      setAppName("Average Revenue - Daily").
+      setMaster(appConf.getConfig(args(2)).getString("deploymentMaster"))
+    val sc = new SparkContext(conf)
+    val inputPath = args(0)
+    val outputPath = args(1)
+
+    val fs = FileSystem.get(sc.hadoopConfiguration)
+    val inputPathExists = fs.exists(new Path(inputPath))
+    val outputPathExists = fs.exists(new Path(outputPath))
+
+    if (!inputPathExists) {
+      println("Input Path does not exists")
+      return
+    }
+
+    if (outputPathExists) {
+      fs.delete(new Path(outputPath), true)
+    }
+
+    val ordersRDD = sc.textFile(inputPath + "/orders")
+    val orderItemsRDD = sc.textFile(inputPath + "/order_items")
+
+    val ordersCompleted = ordersRDD.
+      filter(rec => (rec.split(",")(3) == "COMPLETE"))
+
+    val orders = ordersCompleted.
+      map(rec => (rec.split(",")(0).toInt, rec.split(",")(1)))
+    val orderItemsMap = orderItemsRDD.
+      map(rec => (rec.split(",")(1).toInt, rec.split(",")(4).toFloat))
+
+    val orderItems = orderItemsMap.
+      reduceByKey((acc, value) => acc + value)
+
+    val ordersJoin = orders.join(orderItems)
+
+    val ordersJoinMap = ordersJoin.map(rec => (rec._2._1, rec._2._2))
+
+    val revenuePerDay = ordersJoinMap.aggregateByKey((0.0, 0))(
+      (acc, value) => (acc._1 + value, acc._2 + 1),
+      (total1, total2) => (total1._1 + total2._1, total1._2 + total2._2))
+
+    val averageRevenuePerDay = revenuePerDay.
+      map(rec => (rec._1, BigDecimal(rec._2._1 / rec._2._2).
+        setScale(2, BigDecimal.RoundingMode.HALF_UP).toFloat))
+
+    val averageRevenuePerDaySorted = averageRevenuePerDay.
+      sortByKey()
+
+    averageRevenuePerDaySorted.
+      map(rec => rec._1 + "," + rec._2).
+      saveAsTextFile(outputPath)
+
+  }
+}
+
+
+
+###########################   Pending: Apache Spark - Scala - Externalizing Parameters (To pass arguments from a file)  ##################
+
+Apache Spark - Scala - Externalizing Parameters (To pass arguments from a file)
+https://www.youtube.com/watch?v=ln4dpChqJPI&list=PLf0swTFhTI8pgc4wyhT8lIEJCPT08RI3X&index=35
+
+	# To pass the arguments from a file, NOTE the version for typesafe
+	libraryDependencies += "com.typesafe" % "config" % "1.3.0"
+
+
+################################## Chapter?: Spark program to compare source to target  #############################
+
+https://community.cloudera.com/t5/Advanced-Analytics-Apache-Spark/How-to-optimize-Spark-application-in-case-table-with-too-many/m-p/52523
+
+I have a simple Spark application for data validation between source like DB2,Oracle and target Hive. My application is working fine when running against table with columns around 200-250 but same code starts lagging and take too much time to complete when run for table with 400 columns and 9 million records or more. I have attached complete code (tried in yarn-client and yarn-cluster mode both.) Below is the function which is comparing data of two tables	
+	
+def compareTable(sourceTable:String,targetTable:String,applicationName:String,toolPath:String,result:PrintStream)={
+try{
+val dbProperties = new Properties()
+val propFile = "file:"+"//"+toolPath+"/"+applicationName+".properties"
+dbProperties.load(new URL(propFile).openStream())
+val connectionURL = dbProperties.getProperty("connURL")
+val password = dbProperties.getProperty("password")
+val userName = dbProperties.getProperty("userName")
+val driver = dbProperties.getProperty("driver")
+val sourceSchema = dbProperties.getProperty("sourceSchema")
+val targetSchema = dbProperties.getProperty("targetSchema")
+dbProperties.setProperty("user",userName);
+dbProperties.setProperty("password",password);
+dbProperties.setProperty("driver",driver);
+val sourceDF = hiveContext.read.jdbc(connectionURL,sourceTable,dbProperties)
+val hiveQuery = "select * from "+ targetSchema+"."+targetTable
+val targetDF = hiveContext.sql(hiveQuery)
+val sourceColumnSet:Array[(String,String)] = sourceDF.dtypes
+val targetColumnSet:Array[(String,String)] = targetDF.dtypes
+val columnSets =  compareSchema(targetColumnSet,sourceColumnSet,targetTable) //"This compare schema of tables and return column sets."
+sourceDF.registerTempTable("sourceTable")
+targetDF.registerTempTable("targetTable")
+val sourceQuery = "select "+columnSets._1+" from sourceTable"
+val targetQuery = "select "+columnSets._2+" from targetTable"
+val SDF = hiveContext.sql(sourceQuery)
+val TDF = hiveContext.sql(targetQuery)
+val misMatchedRecords = TDF.except(SDF)
+val misMatchedRecordsCount = misMatchedRecords.count
+if ( misMatchedRecordsCount > 0){
+println("Mismatched Records of target table: "+targetTable)
+misMatchedRecords.show()
+}
+else{
+println("All records are correct in target table: " + targetTable)
+}	
+
+################################################## Connect HBase from Scala #############################################
+
+Pre-request: Make sure  /etc/hbase/conf/hbase-site.xml
+
+https://community.cloudera.com/t5/Data-Ingestion-Integration/Problem-in-connecting-Hbace-from-Scala-code-in-Cloudera-Quick/m-p/52773
+Getting Issue - To be fixed
+The reason for the issue could be : Either you have to copy/paste hbase-site.xml to /etc/spark/conf (or) create a softlink and try again
+
+https://hbase.apache.org/book.html#scala
+
+package main.scala
+
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.hbase.HBaseConfiguration
+import org.apache.hadoop.hbase.client.{ConnectionFactory,HTable,Put}
+import org.apache.hadoop.hbase.util.Bytes
+
+object Hi {
+
+ def main(args: Array[String]) = {
+ println("Hi!")
+ val conf:Configuration = HBaseConfiguration.create()
+ conf.set("hbase.zookeeper.quorum", "xxx.xxx.xxx.xxx") //IP address of my Cloudera virtual machine
+ conf.set("hbase.zookeeper.property.clientPort", "2181")
+ val table:HTable = new HTable(conf, "emp1")
+ val put1:Put = new Put(Bytes.toBytes("row1"))
+ put1.add(Bytes.toBytes("personal_data"),Bytes.toBytes("qual1"),Bytes.toBytes("val1"))
+ table.put(put1)
+ println("Success")
+ }
+} 
+
+## SBT
+name := "play-sbt-project"
+version := "1.0"
+scalaVersion := "2.10.2"
+resolvers += "Apache HBase" at "https://repository.apache.org/content/repositories/releases"
+resolvers += "Thrift" at "http://people.apache.org/~rawson/repo/"
+libraryDependencies ++= Seq(
+"org.apache.hadoop" % "hadoop-core" % "1.2.1",
+"org.apache.hbase" % "hbase" % "1.2.0",
+"org.apache.hbase" % "hbase-client" % "1.2.0",
+"org.apache.hbase" % "hbase-common" % "1.2.0",
+"org.apache.hbase" % "hbase-server" % "1.2.0"
+)
