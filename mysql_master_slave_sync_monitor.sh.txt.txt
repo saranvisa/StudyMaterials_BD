@@ -1,0 +1,34 @@
+[oracle@bda1node02 system_monitor]$ cat mysql_master_slave_sync_monitor.sh
+#!/bin/bash
+
+export LOCAL_PATH=/home/oracle/system_monitor
+export LOG_FILE=log_mysql_sync.txt
+export FULL_LOG=log_mysql_full.txt
+
+#check the log file availability
+if [ -f $LOCAL_PATH/$LOG_FILE ]
+then
+    rm $LOCAL_PATH/$LOG_FILE
+fi
+
+if [ -f $LOCAL_PATH/$FULL_LOG ]
+   then
+     rm $LOCAL_PATH/$FULL_LOG
+fi
+
+
+
+export INI_FILE=env.ini
+mysql --defaults-file=$INI_FILE  -e "show slave status\G;" | awk '/Running/' | awk '$2~/Yes/' >> $LOCAL_PATH/$LOG_FILE
+
+if [ `du -s $LOCAL_PATH/$LOG_FILE | awk '{print $1}'` == 0 ]
+then
+
+   echo "<<TEST MAIL - Pls Ignore>> " > $LOCAL_PATH/$FULL_LOG
+   echo "There is a potential threat to MySQL Master/Slave Sync(in Chicago), please check Slave_IO_Running and Slave_SQL_Running status" >> $LOCAL_PATH/$FULL_LOG
+   echo "  " >> $LOCAL_PATH/$FULL_LOG
+
+   mysql --defaults-file=$INI_FILE  -e "show slave status\G;"  >> $LOCAL_PATH/$FULL_LOG
+
+   mailx -S smtp=10.128.252.99:25 -r noreply@localhost -s "MySQL Master and Slave Sync might broke(in Chicago), pls check SLAVE RUNNING status" -v sksivanandan@k12.com  < $LOCAL_PATH/$FULL_LOG
+fi
