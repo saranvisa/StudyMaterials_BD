@@ -1,0 +1,413 @@
+MySQL
+=====
+######################################################### HIGH LEVEL ISSUE DESCRIPTION ####################################
+
+1. MySQL master is missing some system tables.
+2. MySQL Master & Slave are NOT in sync.
+
+Solution: Fix the MySQL Master first by upgrade it with required system tables and sync Master/Slave
+
+##############################################################################################################################
+########################################## ISSUE 1 IN DETAIL & ACTION PLAN (Fix in MySQL Master) #############################
+##############################################################################################################################
+
+## ISSUE 1: MySQL master is missing some system tables (Fix required in MySQL Master)
+1. Login to MySQL and "use mysql" and "show tables"
+2. It is suppose to return 30+ system tables. But we have noticed that it is returning only 25 system tables.
+
+## STEPS: ACTION PLAN
+1. Master/Slave Location: Verify which node is running the MySQL master and MySQL slave
+2. Space utilization	: Identify "Total Space" or "Space consumed by each services" like Hive, Hue, Host_monitor, mysql, navigator, etc
+3. mysqldump 			: Login to master/slave node & Take a backup of "all-databases" or a particular db ex: Hive, Hue,mysql, navigator, etc
+4. my.cnf backup		: Copy the /etc/my.cnf file to backup location & Move all the files to a safe location off the cluster. 
+5. mysql_upgrade		: Upgrade only System tables
+6. Post upgrade steps	: Restart mysql, Cloudera server & agent
+
+######################################################### STEP1: Master/Slave Location  ####################################
+1. Verify which node is running the MySQL master and MySQL slave
+
+## How to identify the MySQL Master & Slave nodes
+
+# Login to each node & Login to mysql as root user & password. If you are getting access denied, then move to the next node
+$ mysql -u root -p
+Enter password:
+ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: YES)
+
+# If mysql allowed to login then apply the below two commands
+mysql> show master status\G;
+mysql> show slave  status\G;
+
+This will help to identify the Master & Slave
+
+######################################################### STEP2: Space utilization   ########################################
+2. Identify the DB(s) size that we are planning to take backup: all DBs (or) a particular DB 
+
+On the MySQL master/slave: Verify the "datadir" directory is "/var/lib/mysql" by running the following command
+
+## Command1:
+From Linux: $ mysql -u root -p -e "show variables like 'datadir';"
+Enter password:
+(or) 
+From MySQL: mysql> show variables like 'datadir';
+
+Output should look like: 
++---------------+-----------------+
+| Variable_name | Value           |
++---------------+-----------------+
+| datadir       | /var/lib/mysql/ |
++---------------+-----------------+
+
+## Command2: To get "Total Space" consumed by services like Hive, Hue, Host_monitor, mysql, navigator, etc
+$ du -sh /var/lib/mysql/
+Ex Result:
+263G    /var/lib/mysql/
+
+## Command3: To get "Space consumed by each services" like Hive, Hue, Host_monitor, mysql, navigator, etc
+$ du -sh /var/lib/mysql/*
+Ex Result:
+89M     /var/lib/mysql/hive
+2.4M    /var/lib/mysql/host_monitor
+581M    /var/lib/mysql/hue
+1.2M    /var/lib/mysql/mysql
+259G    /var/lib/mysql/navigator
+
+## Note: 
+1. The above command3 will show the Hive Metastore size. To get the actual DB size, go to /user/hive/warehouse/
+2. Pre-request: Make sure the target path has enough space to take backup: Ex: /u01/mysql_bkp/
+
+
+######################################################### STEP3: mysqldump     ################################################
+
+## Command1: Use mysqldump command to take a backup of particular 'mysql metastore' DB or all 'mysql metastore' DBs
+## To backup a particular database (ex: mysql)
+Syntax				:	$ mysqldump -u root -p<password> --databases <DB_NAME>  > /<path>/mysqldumpfile_`date +%d%b%Y%H%M`.sql 
+Command(From Linux)	: 	$ mysqldump -u root -p<password> --databases mysql 		> /u01/mysql_bkp/mysqldumpfile_`date +%d%b%Y%H%M`.sql 
+
+## To backup all 'mysql metastore' databases 
+Syntax				: 	$ mysqldump -uroot -p --all-databases > /<path>/mysqlbackup_`date +%d%b%Y%H%M`.sql
+Command(From Linux)	: 	$ mysqldump -uroot -p --all-databases > /u01/mysql_bkp/mysqlbackup_`date +%d%b%Y%H%M`.sql 
+
+
+## Known Issue:
+mysqldump: Got error: 1146: Table 'navigator.NAV_COUNT_STAGING_RAW' doesn't exist when using LOCK TABLES
+Backup of the BDA Master MySQL Database with mysqldump Fails with "Got error: 1146: Table 'navigator.NAV_COUNT_STAGING_RAW' doesn't exist when using LOCK TABLES" (Doc ID 2240704.1)
+
+## Fix: 
+a. Go to path : /var/lib/mysql/navigator
+b. Make sure it has both ".frm" & ".idb", if any of the file is missing, create the NAV_COUNT_STAGING_RAW table
+# ls -ltr NAV_COUNT_STAGING_RAW*
+-rw-rw---- 1 mysql mysql  8600 Mar 21  2016 NAV_COUNT_STAGING_RAW.frm
+-rw-rw---- 1 mysql mysql 98304 Mar  1 15:31 NAV_COUNT_STAGING_RAW.ibd
+c. Login to MySQL, use navigator
+CREATE TABLE `navigator.NAV_COUNT_STAGING_RAW` (
+`FID` bigint(20) NOT NULL,
+`READ_COUNT` bigint(20) NOT NULL,
+PRIMARY KEY (`FID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+## Retry the mysqldump command
+
+NOTE:
+## if --events are required to avoid warnings: 
+$ mysqldump -u root -p --events --all-databases > /<path>/mysqlbackup.sql 
+
+## Command2: Compress the file: 
+1. Go to the backup path /u01/mysql_bkp/ and compress the backup
+
+$ tar -czvf mysqlbackupall.tar.gz mysqlbackupall.sql 
+$ tar -czvf mysqlbackup.tar.gz mysqlbackup.sql
+
+######################################################### STEP4: my.cnf backup  ################################################
+
+## Copy the /etc/my.cnf file to the same backup location on the cluster. 
+$ cp /etc/my.cnf /<path>/ 
+$ cp /etc/my.cnf /u01/mysql_bkp/
+
+## Move all the files to a safe location off the cluster. 
+
+
+
+######################################################### STEP5: mysql_upgrade : System tables ##################################
+
+
+## Command1: mysql_upgrade, this will Restore the missing tables and anything else: 
+## NOTE: This will upgrade ONLY "syste tables"
+
+$ mysql_upgrade --force -uroot -p --upgrade-system-tables 
+
+Output is like: 
+# mysql_upgrade --force -uroot -p --upgrade-system-tables 
+Enter password: 
+Looking for 'mysql' as: mysql 
+The --upgrade-system-tables option was used, databases won't be touched. 
+Running 'mysql_fix_privilege_tables'... 
+Warning: Using a password on the command line interface can be insecure. 
+OK 
+
+Note:If you use mysql_upgrade with "--upgrade-system-tables", it will only examine the system tables, not all of your data tables. 
+
+If there are any tables which are an old format, they will be upgraded to the current format. This can potentially lock those tables, but note that the system tables are all fairly small tables and it should not take long. 
+
+During the time the tables are locked the MySQL instance/db is locked and it is not available for read/write then Cloudera Manager will be briefly down during the process and alerts will be raised . Jobs will continue to run, but CM will be unavailable during the time. 
+
+
+######################################################### STEP6: Post upgrade steps   ############################################
+
+1. Restart mysql, Cloudera server & agent
+2. Check the binary logs are perfect by checking "mysql-bin.index" and ls -ltr mysql-bin are matching
+	a. cd /var/lib/mysql
+	b. ls -ltr mysql-bin*
+	Ex:
+		-rw-rw---- 1 mysql mysql        19 Mar 20 14:43 mysql-bin.index
+		-rw-rw---- 1 mysql mysql 106013806 Mar 23 13:40 mysql-bin.000595
+	c. cat mysql-bin.index 
+		Ex: ./mysql-bin.000595 
+
+-------------------------
+## After restoring those tables to the instance, do a normal shutdown/restart cycle of mysqld to see if the error messages continue. 
+
+## session 1 on master: 
+$ tail -f /var/log/mysqld.log 
+
+## session 2 on master: 
+$ service mysql stop 
+
+## session 1: 
+wait for output like: 2017-03-13 13:49:15 16260 [Note] /usr/sbin/mysqld: Shutdown complete 
+
+## session 2: 
+$ service mysql start 
+
+## session 1: 
+wait for start to complete 
+/usr/sbin/mysqld: ready for connections. 
+Version: '5.6.34-enterprise-commercial-advanced-log' socket: '/var/lib/mysql/mysql.sock' port: 3306 MySQL Enterprise Server - Advanced Edition (Commercial) 
+
+## session 2: 
+$ service mysql status 
+
+## check the tables 
+use mysql; 
+show tables; 
+
+
+## Check the the log: /var/log/mysqld.log, for errors 
+also (we can watch the tail -f /var/log/mysqld.log for any messaging about missing files) 
+
+## Restart the server to resume writing to the Binary Log (Actually done above) 
+
+## Restart the Cloudera scm Server & Agent
+Try On Node 3:  $ service cloudera-scm-server restart 
+or on Node 1: # Use small c, becuase server available in node03 but you are restarting from node01
+$ dcli -c <bdanode03> service cloudera-scm-server restart  # (and enter the node 3 name) 
+
+# Use Capital C, it stands for Cluster, it will restart the agent from entire cluster
+Then On Node 1: dcli -C service cloudera-scm-agent restart
+
+##############################################################################################################################
+########################## ISSUE 2 IN DETAIL & ACTION PLAN (MySQL Master & Slave are NOT in sync) ############################
+##############################################################################################################################
+
+## ISSUE 2: MySQL Master & Slave are NOT in sync
+1. SLAVE STATUS				: Check the Slave Status by mysql> "SHOW SLAVE STATUS \G" and get the error message
+2. SLAVE BACKUP				: Either down mysql by stop mysql service and copy files (or) use mysqldump without down mysql
+3. CLONE Master to Slave	: Refer the document: How to Restore A MySQL Master Which Has Stopped Generating Binary Log Files and/or Reset MySQL Slave Replication With Cluster Downtime on Oracle Big Data Appliance (Doc ID 2237773.1)
+4. SLAVE STATUS				: Repeat the step1
+
+######################################################### STEP1: SLAVE STATUS  ###############################################
+
+## Check the Last_IO_Error
+
+mysql> show slave status\G;
+*************************** 1. row ***************************
+               Slave_IO_State:
+                  Master_Host: ...node03.k12.com
+                  Master_User: bda_rep
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: mysql-bin.000594
+          Read_Master_Log_Pos: 346139764
+               Relay_Log_File: ...node02-relay-bin.001778
+                Relay_Log_Pos: 346139927
+        Relay_Master_Log_File: mysql-bin.000594
+             Slave_IO_Running: No
+            Slave_SQL_Running: No
+              Replicate_Do_DB:
+          Replicate_Ignore_DB:
+           Replicate_Do_Table:
+       Replicate_Ignore_Table:
+      Replicate_Wild_Do_Table:
+  Replicate_Wild_Ignore_Table:
+                   Last_Errno: 0
+                   Last_Error:
+                 Skip_Counter: 0
+          Exec_Master_Log_Pos: 346139764
+              Relay_Log_Space: 346140385
+              Until_Condition: None
+               Until_Log_File:
+                Until_Log_Pos: 0
+           Master_SSL_Allowed: No
+           Master_SSL_CA_File:
+           Master_SSL_CA_Path:
+              Master_SSL_Cert:
+            Master_SSL_Cipher:
+               Master_SSL_Key:
+        Seconds_Behind_Master: NULL
+Master_SSL_Verify_Server_Cert: No
+                Last_IO_Errno: 1236
+                Last_IO_Error: Got fatal error 1236 from master when reading data from binary log: 'binlog truncated in the middle of event; conside                                                  r out of disk space on master; the first event 'mysql-bin.000003' at 441017940, the last event read from './mysql-bin.000594' at 346139764, the last                                                   byte read from './mysql-bin.000594' at 346139783.'
+               Last_SQL_Errno: 0
+               Last_SQL_Error:
+  Replicate_Ignore_Server_Ids:
+             Master_Server_Id: 1
+                  Master_UUID: 7751c293-efd8-11e5-a984-0010e08e93e2
+             Master_Info_File: /var/lib/mysql/master.info
+                    SQL_Delay: 0
+          SQL_Remaining_Delay: NULL
+      Slave_SQL_Running_State:
+           Master_Retry_Count: 86400
+                  Master_Bind:
+      Last_IO_Error_Timestamp: 170302 05:23:29
+     Last_SQL_Error_Timestamp:
+               Master_SSL_Crl:
+           Master_SSL_Crlpath:
+           Retrieved_Gtid_Set:
+            Executed_Gtid_Set:
+                Auto_Position: 0
+1 row in set (0.02 sec)
+
+
+######################################################### STEP2: SLAVE BACKUP  ###############################################
+
+## On the MySQL slave: This is an optional step. 
+
+1. The steps in this note clone the MySQL master to the MySQL slave by copying the files from the master "datadir" directory, /var/lib/mysql by default, to the slave. 
+2. As an optional step you can back up the files in the MySQL slave "datadir" directory as 'root' user. 
+3. Perform all steps as 'root' on the MySQL slave. 
+4. You can copy the files to a safe location. If you choose to copy the files in the "datadir" directory to a backup location stop mysql first. 
+
+For example: 
+
+i. On the MySQL slave: Verify the "datadir" directory. Confirm the data directory is /var/lib/mysql:
+# mysql -uroot -p -e "show variables like 'datadir';"  
++---------------+-----------------+
+| Variable_name | Value |
++---------------+-----------------+
+| datadir | /var/lib/mysql/ |
++---------------+-----------------+
+
+i. Stop mysql: 
+# service mysql stop 
+
+Verify: 
+# service mysql status 
+
+ii. Copy the files: 
+# cp -p -R /var/lib/mysql /<path>/mysql_$(hostname)_`date +%d%b%Y%H%M%S` 
+
+iii. Verify: 
+# ls -l /<path>/mysql_* 
+
+iv. Start the mysql service: 
+# service mysql start 
+
+Verify: 
+# service mysql status 
+
+
+OR 
+
+b) Take a full database backup with mysqldump if you prefer. If you choose to backup mysql with mysqldump then you need to make sure that the mysql service is running. 
+
+Do so as follows using the example below. 
+
+i. Verify the mysql service is running: 
+# service mysql status 
+
+If the mysql service is not running, start it and verify it is up: 
+
+# service mysql start 
+
+# service mysql status 
+
+ii. Back up the database: 
+# mysqldump -uroot -p --all-databases > /home/mysqlbackup.sql 
+
+if --events are required to avoid warnings: 
+# mysqldump -u root -p --events --all-databases > /home/mysqlbackup.sql 
+
+iii. Compress the file if necessary: 
+# tar -czvf mysqlbackupl.tar.gz mysqlbackup.sql 
+
+iv. Copy the /etc/my.cnf file to the same backup location on the BDA. 
+# cp /etc/my.cnf /home/. 
+
+v. Move the files to a safe location on/off the BDA. 
+
+######################################################### STEP3: CLONE Master to Slave  ###############################################
+
+Refer the document: How to Restore A MySQL Master Which Has Stopped Generating Binary Log Files and/or Reset MySQL Slave Replication With Cluster Downtime on Oracle Big Data Appliance (Doc ID 2237773.1)
+
+
+######################################################### STEP4: SLAVE STATUS  ###############################################
+
+## Check the Last_IO_Error
+
+mysql> show slave status\G;
+*************************** 1. row ***************************
+               Slave_IO_State:
+                  Master_Host: ...node03.k12.com
+                  Master_User: bda_rep
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: mysql-bin.000594
+          Read_Master_Log_Pos: 346139764
+               Relay_Log_File: ...node02-relay-bin.001778
+                Relay_Log_Pos: 346139927
+        Relay_Master_Log_File: mysql-bin.000594
+             Slave_IO_Running: Yes   				***
+            Slave_SQL_Running: Yes				***
+              Replicate_Do_DB:
+          Replicate_Ignore_DB:
+           Replicate_Do_Table:
+       Replicate_Ignore_Table:
+      Replicate_Wild_Do_Table:
+  Replicate_Wild_Ignore_Table:
+                   Last_Errno: 0
+                   Last_Error:
+                 Skip_Counter: 0
+          Exec_Master_Log_Pos: 346139764
+              Relay_Log_Space: 346140385
+              Until_Condition: None
+               Until_Log_File:
+                Until_Log_Pos: 0
+           Master_SSL_Allowed: No
+           Master_SSL_CA_File:
+           Master_SSL_CA_Path:
+              Master_SSL_Cert:
+            Master_SSL_Cipher:
+               Master_SSL_Key:
+        Seconds_Behind_Master: NULL
+Master_SSL_Verify_Server_Cert: No
+                Last_IO_Errno: 1236
+                Last_IO_Error: Got fatal error 1236 from master when reading data from binary log: 'binlog truncated in the middle of event; conside                                                  r out of disk space on master; the first event 'mysql-bin.000003' at 441017940, the last event read from './mysql-bin.000594' at 346139764, the last                                                   byte read from './mysql-bin.000594' at 346139783.'
+               Last_SQL_Errno: 0
+               Last_SQL_Error:
+  Replicate_Ignore_Server_Ids:
+             Master_Server_Id: 1
+                  Master_UUID: 7751c293-efd8-11e5-a984-0010e08e93e2
+             Master_Info_File: /var/lib/mysql/master.info
+                    SQL_Delay: 0
+          SQL_Remaining_Delay: NULL
+      Slave_SQL_Running_State:
+           Master_Retry_Count: 86400
+                  Master_Bind:
+      Last_IO_Error_Timestamp: 170302 05:23:29
+     Last_SQL_Error_Timestamp:
+               Master_SSL_Crl:
+           Master_SSL_Crlpath:
+           Retrieved_Gtid_Set:
+            Executed_Gtid_Set:
+                Auto_Position: 0
+1 row in set (0.02 sec)
+
