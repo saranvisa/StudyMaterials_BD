@@ -1,16 +1,52 @@
+
+##############################################################################   PENDING ##################################
+1. case class 
+2. Data frames
+	https://hortonworks.com/hadoop-tutorial/a-lap-around-apache-spark/
+3. ORC
+	https://hortonworks.com/hadoop-tutorial/using-hive-with-orc-from-apache-spark/
+
+4. Apache Spark - Scala - Externalizing Parameters (To pass arguments from a file)
+https://www.youtube.com/watch?v=ln4dpChqJPI&list=PLf0swTFhTI8pgc4wyhT8lIEJCPT08RI3X&index=35
+
+	# To pass the arguments from a file, NOTE the version for typesafe
+	libraryDependencies += "com.typesafe" % "config" % "1.3.0"
+
+5. Practice: http://discuss.itversity.com/t/find-the-following-from-the-given-products-csv-for-those-who-are-preparing-for-cca175/2516	
+6. Environment Setup & Practice:
+	https://community.hortonworks.com/questions/64278/hdpcd-spark-certification.html
+
+7. Dataset 	
+#################################################################### Final preparation  ###########################
+1. Setup Hortonwork environment
+2. Configure Spark properties
+3. Make sure all the instructions given in this link are practiced
+https://hortonworks.com/services/training/certification/exam-objectives/#hdpcdspark
+4. Use Hive with ORC from Spark SQL
+5. Hortonworks has model exams for other certification, refer to that to understand the exam type 
+
+#################################################################### About HDCPD-spark # Some reference ###########################
+
 HDPCD - Spark Certification  
 Hortonworks Data Platform (HDP)
 
 If you get disconnected at any time, log back in to examslocal.com and attempt to re-launch the exam. The exam proctor will take over from there and assist in getting you back up and running.
 
+https://hortonworks.com/services/training/certification/hdp-certified-spark-developer/
 https://hortonworks.com/tutorials/
 https://hortonworks.com/services/training/certification/exam-objectives/#hdpcdspark
 https://www.youtube.com/watch?v=dyGABwUMgso&list=PLf0swTFhTI8pgc4wyhT8lIEJCPT08RI3X
 http://discuss.itversity.com/c/certifications/hdpcd-spark
+https://mkuthan.github.io/blog/2016/09/30/spark-streaming-on-yarn/
+https://spark.apache.org/docs/1.6.1/configuration.html
 
 Do NOT buy, just for reference : http://www.validdumps.com/HDPCD-Spark
 Do NOT buy, just for reference : http://www.hadoopexam.com/HORTONWORKS_CERT/What_is_hortonworks_hdpcd_spark_Certification.html
 
+
+#################################################################### Setup the Environment ###########################
+http://discuss.itversity.com/t/step-01-setup-hadoop-and-spark-environment-as-well-as-ide/2407
+https://www.youtube.com/watch?v=TP7YY7UCwe8
 
 #################################################################### About HDCPD-spark Exam ###########################
 
@@ -46,6 +82,8 @@ Perform Spark actions on an RDD
 *Create and use broadcast variables and accumulators (Shared Variables)
 *Configure Spark properties
 *Write a Spark Core application in Python or Scala
+** case class, ORC, 
+
 
 Spark SQL
 ===========
@@ -107,12 +145,24 @@ Step4: prepare for HDPCD Spark - Continued (Watch playlist 10th to 13th)
 #########################################################################################################################################
 #################################################################### TIPS  - General  ##############################
 
-Login:
+# Login:
 $ spark-shell
 $ spark-shell --conf spark.ui.port=22222 --master yarn-client
+$ spark-shell --conf spark.ui.port=22322 --master yarn-client
+$ spark-shell --conf "spark.ui.port=10101" --master yarn-client
+	# You can change the port no as you like.
 $ pyspark
 
-Execution:
+# How to check the current Mode:
+scala> sc.master
+res1: String = yarn-client
+	# Spark indicates that you are in yarn mode
+
+scala> sc.master
+res1: String = local
+	# Spark indicates that you are in local mode
+
+Execution: Here 10 is the parameter
 $ spark-submit --class org.apache.spark.examples.SparkPi \
     --master yarn \
     --deploy-mode cluster \
@@ -122,6 +172,20 @@ $ spark-submit --class org.apache.spark.examples.SparkPi \
     --queue thequeue \
     lib/spark-examples*.jar \
     10
+	
+## Execution with Kerberos in k12
+# Here spark.hadoop.fs.hdfs.impl.disable.cache added to fix on of the issue but not fixed
+$ spark-submit --conf spark.executor.extraClassPath="/opt/cloudera/parcels/CDH-5.7.0-1.cdh5.7.0.p1464.1349/
+				--master yarn \
+				--deploy-mode cluster \
+				--queue realtime_queue \
+				--conf spark.hadoop.fs.hdfs.impl.disable.cache=ture \ 
+				--conf spark.yarn.maxAppAttempts=4 \
+				--conf spark.yarn.am.attemptFailuresValidityInterval=1h \
+				--files /home/oracle/workspace/adaptive/bda-config-files/recommender_activitiyvisitevent_stre... \
+				--principal oracle@BDA.K12.COM \
+				--keytab /home/oracle/auth/oracle.keytab \
+				--class com.k12.nextgen.consumer.ActivityVisitEventConsumer /home/oracle/workspace/adaptive/
 
 ITVERSITY GistGithub: https://gist.github.com/dgadiraju
 	
@@ -143,7 +207,7 @@ ITVERSITY GistGithub: https://gist.github.com/dgadiraju
 	Ans: To run locally with one thread by default, or local[N] to run locally with N threads
 	val conf = new SparkConf().setAppName("test").setMaster("local[*]")
 	local[*] Run Spark locally with as many worker threads as logical cores on your machine.
-14. How to Check 'sbt' availability? Runn the following command: $ sbt 
+14. How to Check 'sbt' availability? Run the following command: $ sbt 
 15. While executing "sbt package" command getting the following error: <<refer Practice_Spark_Scala_QR.docx - Known Issue>>
 	a. object apache is not a member of package org sbt
 	b. object sql is not a member of package org.apache.spark
@@ -153,11 +217,15 @@ ITVERSITY GistGithub: https://gist.github.com/dgadiraju
 	libraryDependencies += "org.apache.spark" %% "spark-core" % "1.6.2"
 	# To pass the arguments from a file, NOTE the version for typesafe
 	libraryDependencies += "com.typesafe" % "config" % "1.3.0"
-	# For SQL
+	# For SQL, DATAFRAMES
 	libraryDependencies += "org.apache.spark" %% "spark-sql" % "1.6.2"
 	# For Hive
 	libraryDependencies += "org.apache.spark" %% "spark-hive" % "1.6.2"
 
+17.1 To reflect the SBT package in Eclipse (scala interpreter), 
+	run $ sbt eclipse
+	https://www.youtube.com/watch?v=kPunHXbDy18&index=63&list=PLf0swTFhTI8pgc4wyhT8lIEJCPT08RI3X	
+	
 18. Frequently Used packages to Import
 		import org.apache.spark.SparkConf
 		import org.apache.spark.SparkContext
@@ -165,8 +233,10 @@ ITVERSITY GistGithub: https://gist.github.com/dgadiraju
 		import org.apache.spark.sql.hive.orc._
 		import org.apache.spark.sql._
 		
-		# DataFrames:
+		# DataFrames:??
+		import org.apache.spark.sql._
 		import org.apache.spark.sql.functions._ 
+		import sqlContext.implicits._ # To be applied after declare: val sqlContext = new SQLContext(sc)
 
 		# To check the hadoop path exists
 		import org.apache.hadoop.fs._
@@ -176,6 +246,13 @@ ITVERSITY GistGithub: https://gist.github.com/dgadiraju
 		# RDD Persistence (or) Cache (MEMORY_ONLY, MEMORY_ONLY_SER, etc)
 		import org.apache.spark.storage.StorageLevel._
 		http://sujee.net/2015/01/22/understanding-spark-caching/#.WOlaZtzyuM8
+		
+		# To Pass the parameter
+		import com.typesafe.config._
+		
+		# Using Hive with ORC 
+		import org.apache.spark.sql.hive.orc._
+		import org.apache.spark.sql._
 		
 		
 19. Creating Hive Context
@@ -196,22 +273,31 @@ ITVERSITY GistGithub: https://gist.github.com/dgadiraju
 		val conf = new SparkConf().setAppName("Spark Connect to Hive - emp table")
 		val sc = new SparkContext(conf)
 		val hiveContext = new org.apache.spark.sql.hive.HiveContext(sc)
+		
 20. how to read a csv file? Ans: Use textFile on sparkcontext as follows
 		val yahoo_stocks = sc.textFile("hdfs://sandbox.hortonworks.com:8020/tmp/yahoo_stocks.csv")	
 
 21. RDD vs DATAFRAME
-		a. RDD uses SparkContext. 	  
+		a. RDD uses SparkContext (sc) 	  
 			Ex: 
 			val dataRDD = sc.textFile("user/saranvisa/scala-sbt-input/empid.txt")
 			dataRDD.collect().foreach(println)
 			
-		b. DATAFRAME uses sqlContext. 
+		b. DATAFRAME uses sqlContext. It is nothing but Collection of data organized into "named Columns" then use sql on top of it
 			Ex: 
 			import org.apache.spark.sql.functions._ 
-			val df = sqlContext.textFile("people.txt")
 			val df = sqlContext.jsonFile("people.json")
+			val df = sqlContext.sql("select * from qa.emp")
+			df: org.apache.spark.sql.DataFrame = [empid: int, empname: string]
+			
 			df.show
 			df.select(df("name"), df("age") + 1).show()    # To increase the column value
+			
+21.1: DATAFRAME 
+	 a. is nothing but Collection of data organized into "named Columns" then use sql type of query on top of it
+	 b. This concept is not new, already some languages like pythong using this, it has been inheritated into spark
+	 c. We can create DATAFRAME on the raw data on the fly and use SQL Type of query
+	 d. Need to create CASE CLASS to use the DATAFRAME. NOTE: Understand the diff between normal class & case class
 
 22. Frequently Used File formats
 		a. textFile
@@ -253,22 +339,6 @@ ITVERSITY GistGithub: https://gist.github.com/dgadiraju
 	d.	fullOuterJoin
 30. 
 
-##############################################################################   PENDING ##################################
-1. case class 
-2. Data frames
-	https://hortonworks.com/hadoop-tutorial/a-lap-around-apache-spark/
-3. ORC
-	https://hortonworks.com/hadoop-tutorial/using-hive-with-orc-from-apache-spark/
-
-4. Apache Spark - Scala - Externalizing Parameters (To pass arguments from a file)
-https://www.youtube.com/watch?v=ln4dpChqJPI&list=PLf0swTFhTI8pgc4wyhT8lIEJCPT08RI3X&index=35
-
-	# To pass the arguments from a file, NOTE the version for typesafe
-	libraryDependencies += "com.typesafe" % "config" % "1.3.0"
-
-5. Practice: http://discuss.itversity.com/t/find-the-following-from-the-given-products-csv-for-those-who-are-preparing-for-cca175/2516	
-6. Environment Setup & Practice:
-	https://community.hortonworks.com/questions/64278/hdpcd-spark-certification.html
 
 ##############################################################################   SPARK  INTRODUCTION ##################################
 
@@ -294,6 +364,8 @@ val dataRDD = sc.parallelize(data)
 # Second Way:
 val dataRDD = sc.textFile("hdfs://nn01.itversity.com:8020/user/saranvisa/scala-sbt-input/empid.txt")
 
+# Note: use textFile to read CSV too
+val yahoo_stocks = sc.textFile("hdfs://sandbox.hortonworks.com:8020/tmp/yahoo_stocks.csv")
 
 ## Spark based collection:
 1. Array
@@ -317,6 +389,9 @@ res4: Int = 15
 1005
 
 
+## To separate the data into a new RDD where we do not have the header above and :
+val yahoo_stocks = sc.textFile("hdfs://sandbox.hortonworks.com:8020/tmp/yahoo_stocks.csv")
+val data = yahoo_stocks.mapPartitionsWithIndex { (idx, iter) => if (idx == 0) iter.drop(1) else iter }
 
 
 ## READ LOCAL DATA: Create RDD for external data sets on "OS/local" file system
@@ -450,6 +525,7 @@ val conf = new SparkConf().setAppName("My First Program").setMaster("local")
 val conf = new SparkConf().setAppName("My First Program").setMaster("yarn-client")
 val conf = new SparkConf().setAppName("My First Program").setMaster("mesos-URL")
 val conf = new SparkConf().setAppName("My First Program").setMaster("spark-URL")
+val conf = new SparkConf().setAppName("My First Program").setMaster(args(0))		## To pass the value during runtime
 val conf = new SparkConf().setMaster("mesos://HOST:5050").setAppName("My app").set("spark.executor.uri", "<path to spark-1.6.2.tar.gz uploaded above>")
 val sc = new SparkContext(conf)
 
@@ -961,19 +1037,23 @@ scala> orderJOIN1.sortByKey(false).collect().foreach(println)
 1. This is an API function on SparkContext(sc), it is a Shared variable
 2. Pass RDD as parameter, collectAsMap is an API 
 val bv = sc.broadcast(productDepartmentsMap.collectAsMap())
-3. To get value from broadcast variable. Ex: Consider bv is a boradcast variable then $ bv.value (or) $println(bv)
-4. Broadcast variables are immutable, that means, BV is readonly, we cannot change the value in BV
+3. Broadcast variables allow the programmer to keep a read-only variable cached on each machine rather than shipping a copy of it with tasks. They can be used, for example, to give every node a copy of a large input dataset in an efficient manner. Spark also attempts to distribute broadcast variables using efficient broadcast algorithms to reduce communication cost.
 
-# Practical-1:
+4. To get value from broadcast variable. Ex: Consider bv is a boradcast variable then $ bv.value (or) $println(bv)
+5. Broadcast variables are immutable, that means, BV is readonly, we cannot change the value in BV
+
+## Practical-1:
+# Broadcast variables are created from a variable v by calling SparkContext.broadcast(T, scala.reflect.ClassTag<T>). The broadcast variable is a wrapper around v, and its value can be accessed by calling the value method. The interpreter session below shows this:
+
  scala> val broadcastVar = sc.broadcast(Array(1, 2, 3))
  broadcastVar: org.apache.spark.broadcast.Broadcast[Array[Int} = Broadcast(0)
 
  scala> broadcastVar.value
  res0: Array[Int] = Array(1, 2, 3)
  
-After the broadcast variable is created, it should be used instead of the value v in any functions run on the cluster so that v is not shipped to the nodes more than once. In addition, the object v should not be modified after it is broadcast in order to ensure that all nodes get the same value of the broadcast variable (e.g. if the variable is shipped to a new node later).
+# After the broadcast variable is created, it should be used instead of the value v in any functions run on the cluster so that v is not shipped to the nodes more than once. In addition, the object v should not be modified after it is broadcast in order to ensure that all nodes get the same value of the broadcast variable (e.g. if the variable is shipped to a new node later).
  
-# Practical-2:
+## Practical-2:
 	# Refer "UseCase14: Join & get data from both emp & dept"
  
  
@@ -1214,6 +1294,10 @@ val empdeptjobDescRDD = jobDescRDD.map(rec => (rec.split(",")(0), (broadcastVar.
 	# set RDD into Cache
 	scala> dataRDD.cache()
 	
+	<<OR>>
+	# Use cache while RDD creation
+	val dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/empid_name.txt").cache()
+	
 	# This action work as normal for the first time
 	scala> dataRDD.count()
 	res1: Long = 7
@@ -1258,30 +1342,194 @@ res3: Array[String] = Array(1000,kumar, 1001,Raj, 1003,Adam, 1004,Alex, 1005,Jos
 
 
 
-#######################################  UseCase12: DATA FRAME #####################################################
+
+#######################################  UseCase16: DATA FRAME - Introduction #####################################################
 
 http://spark.apache.org/docs/1.6.2/sql-programming-guide.html#getting-started
 https://hortonworks.com/hadoop-tutorial/a-lap-around-apache-spark/
+https://github.com/rklick-solutions/spark-tutorial/wiki/Spark-SQL
 
-[saranvisa@gw01 ~]$ hdfs dfs -cat /user/saranvisa/scala-sbt-input/emp.json/part*
-{"empid":10,"empname":"kumar"}
-{"empid":20,"empname":"James"}
+## Topic: DataFrame: 
+	a. DataFrame is a combination of RDD & Schema
+	b. It is nothing but Collection of data organized into "named Columns" then use sql type of query on top of it
 
-## Data Frames will be performed on sqlContext
-import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.functions._ 
+1. DATAFRAME uses sqlContext
+	import org.apache.spark.sql.SQLContext
+	
+	# To be applied after declare: val sqlContext = new SQLContext(sc)
+	// this is used to implicitly convert an RDD to a DataFrame.
+	import sqlContext.implicits._
+	
+2. 	To create a dataframe from a JSON file or a Hive Table then use sqlContext as follows: 
+	Ex:
+			val df = sqlContext.jsonFile("path/people.json")	## This method is getting deprecated warning
+			val df = sqlContext.read.json("path/people.json")	## NO Warning
+			val df = sqlContext.sql("select * from qa.emp")
+			
+3. TextFile: To create a dataframe from TextFile, assign it to a RDD and create data from RDD using toDF(). Create a case class. 
 
-val sqlContext = new SQLContext(sc)
-val df = sqlContext.jsonFile("/user/saranvisa/scala-sbt-input/emp.json")  ## Text file option not available, need to check
+	scala> val dataRDD = sc.textFile("/user/sksivanandan/empid_name.txt")
+	dataRDD: org.apache.spark.rdd.RDD[String] = /user/sksivanandan/empid_name.txt MapPartitionsRDD[35] at textFile at <console>:28
 
-## To print the Schema
-scala> df.printSchema()
-root
- |-- empid: long (nullable = true)
- |-- empname: string (nullable = true)
+	scala> dataRDD.collect().foreach(println)
+	10,Kumar
+	20,Sumitha
+	30,Sachein
+	40,Dhiya
 
-## To select a particular column
-scala> df.select("empid").show()
+	scala> val df = dataRDD.toDF()
+	df: org.apache.spark.sql.DataFrame = [_1: string]
+
+	scala> df.show
+		+----------+
+		|        _1|
+		+----------+
+		|  10,Kumar|
+		|20,Sumitha|
+		|30,Sachein|
+		|  40,Dhiya|
+		+----------+
+
+4. In the above example, the entire row will be considered as a single column. So create a case class and use it as follows:
+
+	scala> val dataRDD = sc.textFile("/user/sksivanandan/empid_name.txt")
+	dataRDD: org.apache.spark.rdd.RDD[String] = /user/sksivanandan/empid_name.txt MapPartitionsRDD[35] at textFile at <console>:28
+
+	scala> case class Empid_name(
+			emp_id: Int,
+			emp_name: String
+			) 
+  
+	scala> val dataDF = dataRDD.map(rec => { val a = rec.split(",")
+						Empid_name(a(0).toInt, a(1).toString()) }).toDF()
+	
+	scala> val dataDF = dataRDD.map(rec => { val a = rec.split(",")
+     | Empid_name(a(0).toInt, a(1).toString()) }).toDF()
+	dataDF: org.apache.spark.sql.DataFrame = [emp_id: int, emp_name: string]
+
+	scala> dataDF.show
+	+------+--------+
+	|emp_id|emp_name|
+	+------+--------+
+	|    10|   Kumar|
+	|    20| Sumitha|
+	|    30| Sachein|
+	|    40|   Dhiya|
+	+------+--------+
+
+	<<or>>
+	
+    scala> val dataDF = sc.textFile("/user/sksivanandan/empid_name.txt").
+     | map(rec => {
+     | val a = rec.split(",")
+     | Empid_name(a(0).toInt, a(1).toString())
+     | }).toDF()
+	dataDF: org.apache.spark.sql.DataFrame = [emp_id: int, emp_name: string]
+
+5. registerTempTable 
+
+scala> dataDF.registerTempTable("tmp_empid_name")
+
+scala> val dataRDD1 = sqlContext.sql("select * from tmp_empid_name")
+dataRDD1: org.apache.spark.sql.DataFrame = [emp_id: int, emp_name: string]
+
+scala> dataRDD1.collect().foreach(println)
+[10,Kumar]
+[20,Sumitha]
+[30,Sachein]
+[40,Dhiya]
+
+6. To Convert DataFrame to RDD
+	orderJoinDF.groupBy("order_date").agg(sum("order_item_subtotal")).
+	sort("order_date").rdd.saveAsTextFile("/user/saranvisa/scala-sbt-output/orderdf")
+
+7. To Convert RDD to DataFrame (Pre-request: case class)
+		scala> val dataDF = dataRDD.map(rec => { val a = rec.split(",")
+			   Empid_name(a(0).toInt, a(1).toString()) }).toDF()
+	  
+6. Dataframe Operations:
+		a. printSchema
+		b. show
+		c. select
+		d. groupBy
+		e. agg
+		f. sort
+		g. filter
+		h. registerTempTable
+		and many more
+
+7. Save Dataframe to different formats
+	scala> val sqlc1 = sqlContext.jsonFile("/user/saranvisa/scala-sbt-input/empjson.json")
+	scala> sqlc1.show
+	+-----+-------+
+	|empid|empname|
+	+-----+-------+
+	|   10|  kumar|
+	|   20|  James|
+	|   30|    Sam|
+	|   40| Dinesh|	etc
+	
+	## Ignore the error mentioned below. Both write.parquet & write.save are storing file in parquet format
+	scala> sqlc1.select("empid","empname").write.parquet("/user/saranvisa/scala-sbt-input/emp_parquet.parquet")
+	scala> sqlc1.select("empid","empname").write.save("/user/saranvisa/scala-sbt-input/emp_parquet.parquet")
+		SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+		SLF4J: Defaulting to no-operation (NOP) logger implementation
+		SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+	
+	## Save the file into ORC format
+	scala> val results = sqlContext.sql("SELECT * FROM yahoo_stocks_temp")
+	
+	scala> results.write.format("orc").save("yahoo_stocks_orc")
+	
+	HDFS> hdfs dfs -ls /user/saranvisa/scala-sbt-input/emp_parquet.parquet	## Folder created with parquent data
+
+## Practical-1
+	val data = Array(1,2,3,4,5)
+	val dataRDD = sc.parallelize(data)
+	val dataDF = dataRDD.toDF()
+	dataDF.write.save("/user/saranvisa/scala-sbt-input/temp/file1_parquet1")		
+	dataDF.write.parquet("/user/saranvisa/scala-sbt-input/temp/file1_parquet2")
+	val dataDF1 = sqlContext.read.parquet("/user/saranvisa/scala-sbt-input/temp/file1_parquet1")
+	val dataDF2 = sqlContext.read.parquet("/user/saranvisa/scala-sbt-input/temp/file1_parquet2")
+	dataDF1.show
+	dataDF2.show
+	
+	
+	
+	
+## Practical-2
+		b. DATAFRAME uses sqlContext. 
+			Ex: 
+			import org.apache.spark.sql.functions._ 
+			val df = sqlContext.jsonFile("people.json")
+			val df = sqlContext.sql("select * from qa.emp")
+			df: org.apache.spark.sql.DataFrame = [empid: int, empname: string]
+
+			## val df = sqlContext.textFile("people.txt")    ## textFile will NOT work with sqlContext
+			## value textFile is not a member of org.apache.spark.sql.SQLContext
+			df.show
+			df.select(df("name"), df("age") + 1).show()    # To increase the column value
+
+## Practical-3			
+	[saranvisa@gw01 ~]$ hdfs dfs -cat /user/saranvisa/scala-sbt-input/emp.json/part*
+	{"empid":10,"empname":"kumar"}
+	{"empid":20,"empname":"James"}
+
+	## Data Frames will be performed on sqlContext
+	import org.apache.spark.sql.SQLContext
+	import org.apache.spark.sql.functions._ 
+
+	val sqlContext = new SQLContext(sc)
+	val df = sqlContext.jsonFile("/user/saranvisa/scala-sbt-input/emp.json")  ## Text file option not available, need to check
+
+	## To print the Schema
+	scala> df.printSchema()
+	root
+	|-- empid: long (nullable = true)
+	|-- empname: string (nullable = true)
+
+	## To select a particular column
+	scala> df.select("empid").show()
 +-----+
 |empid|
 +-----+
@@ -1289,8 +1537,8 @@ scala> df.select("empid").show()
 |   20|
 +-----+
 
-## To select a particular column
-scala> df.select("empid","empname").show()
+	## To select a particular column
+	scala> df.select("empid","empname").show()
 +-----+-------+
 |empid|empname|
 +-----+-------+
@@ -1298,8 +1546,8 @@ scala> df.select("empid","empname").show()
 |   20|  James|
 +-----+-------+
 
-## Increment the value of EmpID by 1
-scala> df.select(df("empid")+1, df("empname")).show()
+	## Increment the value of EmpID by 1
+	scala> df.select(df("empid")+1, df("empname")).show()
 +-----------+-------+
 |(empid + 1)|empname|
 +-----------+-------+
@@ -1307,8 +1555,8 @@ scala> df.select(df("empid")+1, df("empname")).show()
 |         21|  James|
 +-----------+-------+
 
-## To check true or false
-scala> df.select(df("empid") > 10).show()
+	## To check true or false
+	scala> df.select(df("empid") > 10).show()
 +------------+
 |(empid > 10)|
 +------------+
@@ -1316,16 +1564,16 @@ scala> df.select(df("empid") > 10).show()
 |        true|
 +------------+
 
-## To apply filter on DATA FRAME
-scala> df.filter(df("empid") > 10).show()
+	## To apply filter on DATA FRAME
+	scala> df.filter(df("empid") > 10).show()
 +-----+-------+
 |empid|empname|
 +-----+-------+
 |   20|  James|
 +-----+-------+
 
-## Apply group by
-scala> df.groupBy("empid").count().show()
+	## Apply group by
+	scala> df.groupBy("empid").count().show()
 +-----+-----+
 |empid|count|
 +-----+-----+
@@ -1333,17 +1581,378 @@ scala> df.groupBy("empid").count().show()
 |   20|    1|
 +-----+-----+
 
+## Practical-4
 
-#######################################  UseCase9: DATA SETS #####################################################
+	scala> import org.apache.spark.sql.SQLContext
+	import org.apache.spark.sql.SQLContext
+
+	scala> val df = sqlContext.sql("select * from qa.test13")
+	df: org.apache.spark.sql.DataFrame = [var1: int, var2: decimal(5,2), var3: decimal(5,2)]
+
+	scala> df.show
+	+----+------+------+
+	|var1|  var2|  var3|
+	+----+------+------+
+	| 150|  5.56|  0.36|
+	|  10| 11.10| 22.30|
+	|  13|211.10|422.13|
+	+----+------+------+
+
+
+#######################################  UseCase17: DATA FRAME - Compute total revenue for each day ###################################
+
+## Use Case: compute total revenue for each day from Orders & Order_items tables using Data Frame
+
+## Individual steps
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.SQLContext
+
+
+val conf = new SparkConf().setAppName("Total Revenue - Daily - Data Frames").setMaster("yarn-client")  
+val sc = new SparkContext(conf)
+val sqlContext = new SQLContext(sc)
+
+case class Orders(
+  order_id: Int,
+  order_date: String,
+  order_customer_id: Int,
+  order_status: String) 
+
+case class OrderItems(
+  order_item_id: Int,
+  order_item_order_id: Int,
+  order_item_product_id: Int,
+  order_item_quantity: Int,
+  order_item_subtotal: Float,
+  order_item_price: Float)  
+
+
+val ordersDF = sc.textFile("/user/saranvisa/scala-sbt-input/orders/").map(rec => {val a = rec.split(",")
+Orders(a(0).toInt, a(1).toString(), a(2).toInt, a(3).toString())
+}).toDF()
+
+## NOTE: use equal three times (===)
+val ordersFilteredDF = ordersDF.filter(ordersDF("order_status")==="COMPLETE")
+
+val orderItemsDF = sc.textFile("/user/saranvisa/scala-sbt-input/order_items").map(rec => {val a = rec.split(",")
+OrderItems(a(0).toInt,
+a(1).toInt,
+a(2).toInt,
+a(3).toInt,
+a(4).toFloat,
+a(5).toFloat)
+}).toDF()
+
+val orderJoinDF = ordersFilteredDF.join(orderItemsDF, ordersFilteredDF("order_id") === orderItemsDF("order_item_order_id") )
+
+scala> orderJoinDF.printSchema
+root
+ |-- order_id: integer (nullable = false)
+ |-- order_date: string (nullable = true)
+ |-- order_customer_id: integer (nullable = false)
+ |-- order_status: string (nullable = true)
+ |-- order_item_id: integer (nullable = false)
+ |-- order_item_order_id: integer (nullable = false)
+ |-- order_item_product_id: integer (nullable = false)
+ |-- order_item_quantity: integer (nullable = false)
+ |-- order_item_subtotal: float (nullable = false)
+ |-- order_item_price: float (nullable = false)
+
+orderJoinDF.groupBy("order_date").agg(sum("order_item_subtotal")).sort("order_date").rdd.saveAsTextFile("/user/saranvisa/scala-sbt-output/orderdf")
+
+
+
+#######################################  UseCase18: DATA FRAME - Join EMP and DEPT ###################################
+
+##Tips: 
+1. If you are creating more than one Case Class, make sure column name is NOT same in both the case classes. Otherwise it may give trouble when you join
+
+scala> import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.SQLContext
+
+scala> import org.apache.spark.sql.hive.HiveContext
+import org.apache.spark.sql.hive.HiveContext
+
+
+
+scala> case class EmpDept(
+     | empid:Int,
+     | empname:String,
+     | deptid:Int)
+defined class EmpDept
+
+scala> val empDF = sc.textFile("/user/saranvisa/scala-sbt-input/empid_name_dept.txt").map(rec => {val a = rec.split(",")
+     | EmpDept(a(0).toInt, a(1).toString(),a(2).toInt)
+     | }).toDF()
+empDF: org.apache.spark.sql.DataFrame = [empid: int, empname: string, deptid: int]
+
+scala> empDF.show
++-----+-------+------+
+|empid|empname|deptid|
++-----+-------+------+
+| 1000|  kumar|    10|
+| 1001|    Raj|    20|
+| 1003|   Adam|    30|
+| 1004|   Alex|    10|
+| 1005|   Jose|    10|
+| 1006|  kumar|    10|
+| 1007|   Alex|    40|
++-----+-------+------+
+
+scala> case class Dept(
+     | deptid:Int,
+     | deptname:String)
+defined class Dept
+
+scala> val deptDF = sc.textFile("/user/saranvisa/scala-sbt-input/dept.txt").map(rec => {val a = rec.split(",")
+     | Dept(a(0).toInt, a(1).toString())
+     | }).toDF()
+deptDF: org.apache.spark.sql.DataFrame = [deptid: int, deptname: string]
+
+scala> deptDF.show
++------+-----------+
+|deptid|   deptname|
++------+-----------+
+|    10| ITEngineer|
+|    20|    Support|
+|    30|    Manager|
+|    40|ProdSupport|
++------+-----------+
+
+scala> val empdeptJoinDF = empDF.join(deptDF,empDF("deptid")===deptDF("deptid"))
+empdeptJoinDF: org.apache.spark.sql.DataFrame = [empid: int, empname: string, deptid: int, deptid: int, deptname: string]
+
+scala> empdeptJoinDF.show
++-----+-------+------+------+-----------+
+|empid|empname|deptid|deptid|   deptname|
++-----+-------+------+------+-----------+
+| 1007|   Alex|    40|    40|ProdSupport|
+| 1000|  kumar|    10|    10| ITEngineer|
+| 1004|   Alex|    10|    10| ITEngineer|
+| 1005|   Jose|    10|    10| ITEngineer|
+| 1006|  kumar|    10|    10| ITEngineer|
+| 1001|    Raj|    20|    20|    Support|
+| 1003|   Adam|    30|    30|    Manager|
++-----+-------+------+------+-----------+
+
+scala> val sqlContext = new HiveContext(sc)
+sqlContext: org.apache.spark.sql.hive.HiveContext = org.apache.spark.sql.hive.HiveContext@5204a284
+
+scala> empdeptJoinDF.registerTempTable("tmp_empdept")
+
+
+<<<This is not working need to identify the issue>>> -- The initial understanding a package import is missing
+
+scala> import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions._
+
+##########################  UseCase18.1: How to define datatype when creating dataframe using sql.types ##########################
+
+https://community.cloudera.com/t5/Advanced-Analytics-Apache-Spark/How-to-define-datatype-when-creating-dataframe-using-sql-types/m-p/53709
+
+## Trying to convert a text file to DataFrame. I found using following method instead of case class. But where is the data type for each field is defined if we go by this method.
+
+val people = sc.textFile("file:/home/edureka/dmishra/people.txt")
+val schemaString = "name age"
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.{StructType,StructField,StringType};
+val schema =
+          StructType(
+          schemaString.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
+val rowRDD = people.map(_.split(",")).map(p => Row(p(0), p(1).trim))
+
+val peopleDataFrame = sqlContext.createDataFrame(rowRDD, schema)
+peopleDataFrame.registerTempTable("people")
+val results = sqlContext.sql("select name,age from people")
+val r = results.map(t => "Name: " + t(0) + "Age : " + t(1)).collect().foreach(println
+
+scala> results.dtypes.foreach(println)
+(name,StringType)
+(age,StringType)
+ 
+# Where is the data type assigned for data frame. How to define age as integer data type in this case or if there is a date field, where to define it.
+
+## Soln:
+
+It is the below line which is setting the data types for both the fields as StringType: 
+ 
+val schema =
+          StructType(
+          schemaString.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
+You can define your custom schema as follows : 
+ 
+val customSchema = StructType(Array(
+    StructField("name", StringType, true),
+    StructField("age", IntegerType, true)))
+You can add additional fields as well in the above schema definition.
+ 
+And then you can use this customSchema while creating the dataframe as follows: 
+ 
+val peopleDataFrame = sqlContext.createDataFrame(rowRDD, customSchema)
+ 
+Also for details, please see <get the link from community group link> page. 
+
+#######################################  UseCase 19: Using Hive with ORC #######################################################
+
+## Topic: ORC
+	https://hortonworks.com/hadoop-tutorial/using-hive-with-orc-from-apache-spark/
+
+## In Hive, Create ORC table from a normal table
+	# Without row format
+	> create table retail_stage.orders_orc stored as orc
+		as select * from retail_stage.orders;
+	
+	# With row format
+	> create table retail_stage.orders_orc 
+		row format delimited fields terminated by ':'
+		stored as orc
+		as select * from retail_stage.orders;
+	
+## using Spark shell, reading data from HDFS, creating an Hive table in ORC format, querying the Hive Table, and persisting data using Spark SQL.
+
+import org.apache.spark.sql.hive.orc._
+import org.apache.spark.sql._
+
+## Create hive Context
+val hiveContext = new org.apache.spark.sql.hive.HiveContext(sc)
+
+## Create ORC table
+hiveContext.sql("create table yahoo_orc_table (date STRING, open_price FLOAT, high_price FLOAT, low_price FLOAT, close_price FLOAT, volume INT, adj_price FLOAT) stored as orc")
+
+## Assign the data to RDD
+val yahoo_stocks = sc.textFile("hdfs://sandbox.hortonworks.com:8020/tmp/yahoo_stocks.csv")
+## Preview the data
+yahoo_stocks.take(10)
+## Separating the header from the data
+val header = yahoo_stocks.first
+## Now we need to separate the data into a new RDD where we do not have the header above and :
+val data = yahoo_stocks.mapPartitionsWithIndex { (idx, iter) => if (idx == 0) iter.drop(1) else iter }
+
+## CREATING A SCHEMA
+case class YahooStockPrice(date: String, open: Float, high: Float, low: Float, close: Float, volume: Integer, adjClose: Float)
+
+## ATTACHING THE SCHEMA TO THE PARSED DATA
+val stockprice = data.map(_.split(",")).map(row => YahooStockPrice(row(0), row(1).trim.toFloat, row(2).trim.toFloat, row(3).trim.toFloat, row(4).trim.toFloat, row(5).trim.toInt, row(6).trim.toFloat)).toDF()
+
+## REGISTERING A TEMPORARY TABLE
+stockprice.registerTempTable("yahoo_stocks_temp")
+
+## QUERYING AGAINST THE TABLE & The resultset returned from the Spark SQL query is now loaded in the results RDD
+val results = sqlContext.sql("SELECT * FROM yahoo_stocks_temp")
+
+## Print the RDD on the command line
+results.map(t => "Stock Entry: " + t.toString).collect().foreach(println)
+
+## SAVING AS AN ORC FILE...persist back the RDD into the Hive ORC table we created before.
+results.write.format("orc").save("yahoo_stocks_orc")
+
+## To store results in a hive directory rather than user directory, use this path instead:
+/apps/hive/warehouse/yahoo_stocks_orc
+
+## READING THE ORC FILE
+val hiveContext = new org.apache.spark.sql.hive.HiveContext(sc)
+val yahoo_stocks_orc = hiveContext.read.format("orc").load("yahoo_stocks_orc")
+
+
+#######################################  UseCase 20: Configure Spark properties ###################################################
+
+https://spark.apache.org/docs/1.6.1/configuration.html
+http://blog.cloudera.com/blog/2015/03/how-to-tune-your-apache-spark-jobs-part-2/
+
+#About Spark Configuration Properties
+1. Default path /etc/spark/conf and file name spark-defaults.conf
+2. These are default system properties included when running spark-submit.
+
+
+## ITVersity (Ambari)
+[saranvisa@gw01 conf]$ pwd
+/etc/spark/conf
+[saranvisa@gw01 conf]$ cat spark-defaults.conf
+# Generated by Apache Ambari. Mon Apr 17 01:44:18 2017
+
+spark.driver.extraClassPath /usr/share/java/mysql-connector-java.jar
+spark.driver.extraLibraryPath /usr/hdp/current/hadoop-client/lib/native:/usr/hdp/current/hadoop-client/lib/native/Linux-amd64-64
+spark.eventLog.dir hdfs:///spark-history
+spark.eventLog.enabled true
+spark.executor.extraClassPath /usr/share/java/mysql-connector-java.jar
+spark.executor.extraLibraryPath /usr/hdp/current/hadoop-client/lib/native:/usr/hdp/current/hadoop-client/lib/native/Linux-amd64-64
+spark.history.fs.logDirectory hdfs:///spark-history
+spark.history.kerberos.keytab none
+spark.history.kerberos.principal none
+spark.history.provider org.apache.spark.deploy.history.FsHistoryProvider
+spark.history.ui.port 18080
+spark.yarn.containerLauncherMaxThreads 25
+spark.yarn.driver.memoryOverhead 384
+spark.yarn.executor.memoryOverhead 384
+spark.yarn.historyServer.address gw01.itversity.com:18080
+spark.yarn.max.executor.failures 3
+spark.yarn.preserve.staging.files false
+spark.yarn.queue default
+spark.yarn.scheduler.heartbeat.interval-ms 5000
+spark.yarn.submit.file.replication 3
+
+## K12 (Cloudera Manager)
+[sksivanandan@bda1node03 conf]$ pwd
+/etc/spark/conf
+[sksivanandan@bda1node03 conf]$ cat spark-defaults.conf
+spark.authenticate=false
+spark.dynamicAllocation.enabled=true
+spark.dynamicAllocation.executorIdleTimeout=60
+spark.dynamicAllocation.minExecutors=0
+spark.dynamicAllocation.schedulerBacklogTimeout=1
+spark.eventLog.enabled=true
+spark.serializer=org.apache.spark.serializer.KryoSerializer
+spark.shuffle.service.enabled=true
+spark.shuffle.service.port=7337
+spark.eventLog.dir=hdfs://k12bdacluster-ns/user/spark/applicationHistory
+spark.yarn.historyServer.address=http://bda1node03.k12.com:18088
+spark.yarn.jar=local:/opt/cloudera/parcels/CDH-5.7.0-1.cdh5.7.0.p1464.1349/lib/spark/lib/spark-assembly.jar
+spark.driver.extraLibraryPath=/opt/cloudera/parcels/CDH-5.7.0-1.cdh5.7.0.p1464.1349/lib/hadoop/lib/native
+spark.executor.extraLibraryPath=/opt/cloudera/parcels/CDH-5.7.0-1.cdh5.7.0.p1464.1349/lib/hadoop/lib/native
+spark.yarn.am.extraLibraryPath=/opt/cloudera/parcels/CDH-5.7.0-1.cdh5.7.0.p1464.1349/lib/hadoop/lib/native
+spark.yarn.config.gatewayPath=/opt/cloudera/parcels
+spark.yarn.config.replacementPath={{HADOOP_COMMON_HOME}}/../../..
+spark.master=yarn-client
+
+#######################################  UseCase 21: Spark properties with Security##########################################
+
+https://mkuthan.github.io/blog/2016/09/30/spark-streaming-on-yarn/
+
+spark-submit --master yarn --deploy-mode cluster \
+     --conf spark.yarn.maxAppAttempts=4 \
+     --conf spark.yarn.am.attemptFailuresValidityInterval=1h \
+     --conf spark.yarn.max.executor.failures={8 * num_executors} \
+     --conf spark.yarn.executor.failuresValidityInterval=1h \
+     --conf spark.task.maxFailures=8 \
+     --queue realtime_queue \
+     --conf spark.speculation=true \
+     --principal user/hostname@domain \
+     --keytab /path/to/foo.keytab
+	 
+spark-submit --master yarn --deploy-mode cluster \
+     --conf spark.yarn.maxAppAttempts=4 \
+     --conf spark.yarn.am.attemptFailuresValidityInterval=1h \
+     --conf spark.yarn.max.executor.failures={8 * num_executors} \
+     --conf spark.yarn.executor.failuresValidityInterval=1h \
+     --conf spark.task.maxFailures=8 \
+     --queue realtime_queue \
+     --conf spark.speculation=true \
+     --principal user/hostname@domain \
+     --keytab /path/to/foo.keytab \
+     --conf spark.hadoop.fs.hdfs.impl.disable.cache=true	 
+
+#######################################  UseCase 22: DATA SETS ##############################################################
 http://spark.apache.org/docs/1.6.2/sql-programming-guide.html#getting-started
-		
+https://www.youtube.com/watch?v=ykzjRMgYE3M		
+
 ## 1. Datasets are similar to RDDs, however, instead of using Java Serialization they use a specialized "Encoder" to serialize the objects for processing		
 ## 2. encoders are code generated dynamically and use a format that allows Spark to perform many operations like filtering, sorting and hashing 
 
 
 
 		
-########################################################   ITVersity Sample Program   ##################################		
+########################################################   ITVersity - AvgRevenueDaily   ##################################		
 package retail
 
 import org.apache.spark.SparkContext, org.apache.spark.SparkConf
@@ -1409,7 +2018,85 @@ object AvgRevenueDaily {
   }
 }
 
+########################################################   ITVersity - word count   ##################################		
 
+package wordcount
+
+import com.typesafe.config._
+import org.apache.spark.SparkContext, org.apache.spark.SparkConf
+import org.apache.hadoop.fs._
+
+
+object WordCount {
+  def main(args: Array[String]) {
+    val appConf = ConfigFactory.load()
+    val conf = new SparkConf().
+      setAppName("Word Count").
+      setMaster(appConf.getString("deploymentMaster"))
+      
+    for(c < - conf.getAll)
+      println(c._2)
+    val sc = new SparkContext(conf)
+    val inputPath = args(0)
+    val outputPath = args(1)
+    
+    val fs = FileSystem.get(sc.hadoopConfiguration)
+    val inputPathExists = fs.exists(new Path(inputPath))
+    val outputPathExists = fs.exists(new Path(outputPath))
+    
+    if(!inputPathExists) {
+      println("Invalid input path")
+      return
+    }
+      
+    if(outputPathExists)
+      fs.delete(new Path(outputPath), true)
+      
+    val wc = sc.textFile(inputPath).
+      flatMap(rec => rec.split(" ")).
+      map(rec => (rec, 1)).
+      reduceByKey((acc, value) => acc + value)
+      
+    wc.saveAsTextFile(outputPath)
+
+  }
+}
+
+############################################   Pending: Spark 2.0.1 option ###########################################
+
+https://spark.apache.org/docs/2.0.1/api/java/org/apache/spark/sql/SparkSession.html
+The builder can also be used to create a new session:
+   SparkSession.builder()
+     .master("local")
+     .appName("Word Count")
+     .config("spark.some.config.option", "some-value").
+     .getOrCreate()
+
+https://community.cloudera.com/t5/Advanced-Analytics-Apache-Spark/spark-dataframe-write-to-file-using-scala/m-p/54124	 
+I am trying to read a file and add two extra columns. 1. Seq no and 2. filename. When I run spark job in scala IDE output is generated correctly but when I run in putty with local or cluster mode job is stucks at stage-2 (save at File_Process). There is no progress even i wait for an hour. I am testing on 1GB data.
+Below is the code i am using
+
+object File_Process
+{
+ Logger.getLogger("org").setLevel(Level.ERROR)  
+ val spark = SparkSession.builder().master("yarn").appName("File_Process").getOrCreate()
+ 
+ def main(arg:Array[String])
+ {
+ 
+  val FileDF = spark.read.csv("/data/sourcefile/")
+  val rdd = FileDF.rdd.zipWithIndex().map(indexedRow => Row.fromSeq((indexedRow._2.toLong+SEED+1)+:indexedRow._1.toSeq))
+  val FileDFWithSeqNo = StructType(Array(StructField("UniqueRowIdentifier",LongType)).++(FileDF.schema.fields))
+  val datasetnew = spark.createDataFrame(rdd,FileDFWithSeqNo)
+  val dataframefinal = datasetnew.withColumn("Filetag", lit(filename))
+  val query = dataframefinal.write
+              .mode("overwrite")
+              .format("com.databricks.spark.csv")
+              .option("delimiter", "|")
+              .save("/data/text_file/")
+  spark.stop()
+ }
+ 
 
 ###########################   Pending: Apache Spark - Scala - Externalizing Parameters (To pass arguments from a file)  ##################
 
@@ -1462,6 +2149,133 @@ else{
 println("All records are correct in target table: " + targetTable)
 }	
 
+
+
+#################################################### K12 - BKT Calculator ####################################################
+## BKTJob.scala
+
+package com.k12.bkt.calculator
+
+import java.io.File
+
+import com.typesafe.config.ConfigFactory
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.hive.HiveContext
+import org.apache.spark.sql.types._
+import org.apache.spark.{SparkConf, SparkContext}
+
+object BKTJob {
+  /*
+  https://github.com/rklick-solutions/spark-tutorial/wiki/Spark-SQL
+  http://stackoverflow.com/questions/31980584/how-to-connect-to-a-hive-metastore-programmatically-in-sparksql
+   */
+   
+   /*
+   # The below is something similar to 
+   val or val VariableName : DataType = [Initial Value]
+   val myVal :String;   
+   */
+  var input_table: org.apache.spark.broadcast.Broadcast[String] = _
+  var output_table: org.apache.spark.broadcast.Broadcast[String] = _
+  var input_tables_schema: org.apache.spark.broadcast.Broadcast[String] = _
+  var output_tables_schema: org.apache.spark.broadcast.Broadcast[String] = _
+
+  def main(args: Array[String]) {
+    var config: com.typesafe.config.Config = ConfigFactory.empty()
+    if (args.length < 1)
+      println("Missing properties file")
+    else
+    //Example of access: config.getString("username")
+      config = get_config(args(0))
+    /* Dynamically Loading Spark Properties
+     ./bin/spark-submit --name "Spark-Hive-bkt-calculator" --master local[4] --conf spark.eventLog.enabled=false
+  --conf "spark.executor.extraJavaOptions=-XX:+PrintGCDetails -XX:+PrintGCTimeStamps" bkt-calculator-0.0.1-SNAPSHOT.jar
+     */
+    val sc: org.apache.spark.SparkContext = new SparkContext(new SparkConf())
+    val sql_context: SQLContext = new HiveContext(sc)
+    input_table = sc.broadcast(config.getString("input_table"))
+    output_table = sc.broadcast(config.getString("output_table"))
+    input_tables_schema = sc.broadcast(config.getString("input_tables_schema"))
+    output_tables_schema = sc.broadcast(config.getString("output_tables_schema"))
+    // this is used to implicitly convert an RDD to a DataFrame.
+    runJob(sql_context)
+    sc.stop()
+  }
+
+  private def get_config(file_location: String): com.typesafe.config.Config = {
+    try {
+      ConfigFactory.parseFile(new File(file_location))
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        ConfigFactory.empty()
+      }
+    }
+  }
+
+  private def runJob(sql_context: org.apache.spark.sql.SQLContext): Unit = {
+    val input_table_str = input_table.value
+    val input_tables_schema_str = input_tables_schema.value
+    val query_dataframe = sql_context.sql(s"SELECT * FROM $input_tables_schema_str.$input_table_str")
+    val rows: org.apache.spark.rdd.RDD[org.apache.spark.sql.Row] = query_dataframe.rdd
+    // Create a groupId for each row so the (questionId + studentId)
+    val mapped_group_ids = rows.map(rv => ("S-" + rv.getAs[Int]("identity_id").toString + "-OBJ-" + rv.getAs[Int]("master_objective_id").toString, rv))
+    // For each groupId (questionId + studentId) create a new RDD with the form ( (questionId + studentId), [questionsScores, .... ] )
+    // returns a dataset of (K, List[org.apache.spark.sql.Row] ) pairs
+    val questions_groups = mapped_group_ids.groupByKey().mapValues(_.toList).mapValues(v_list => get_bkt(v_list)).flatMap { case (key, values) => values.map((key, _)) }.map(v => v._2)
+    /* -- output TABLE structure -- */
+    val table_structure: org.apache.spark.sql.types.StructType = org.apache.spark.sql.types.StructType(
+      StructField("master_objective_id", LongType, nullable = false) ::
+        StructField("identity_id", LongType, nullable = false) ::
+        StructField("assessment_id", StringType, nullable = false) ::
+        StructField("date_submitted", StringType, nullable = false) ::
+        StructField("assmtitem_attempt_id", LongType, nullable = false) ::
+        StructField("proficiency", DoubleType, nullable = false) ::
+        StructField("l0", DoubleType, nullable = false) :: Nil
+    )
+    sql_context.createDataFrame(questions_groups, table_structure).registerTempTable("tmp_out_table_bkt")
+    val output_table_str = output_table.value
+    val output_tables_schema_str = output_tables_schema.value
+    //http://stackoverflow.com/questions/17425492/hive-insert-query-like-sql
+    sql_context.sql(s"INSERT INTO $output_tables_schema_str.$output_table_str SELECT * FROM tmp_out_table_bkt")
+  }
+
+
+  private def get_bkt(rows: List[org.apache.spark.sql.Row]): scala.collection.immutable.List[org.apache.spark.sql.Row] = {
+    var questions_list = List[scala.collection.mutable.Map[String, Any]]()
+    for (q <- rows) {
+      /* for each question in the INPUT HIVE table */
+      val q_el = scala.collection.mutable.Map[String, Any](
+        "completion_time" -> q.getAs[Long]("completion_time"), //Parse from STRING to long
+        "question_score_obtained" -> q.getAs[Int]("question_score_obtained"),
+        "question_full_score" -> q.getAs[Int]("question_full_score"),
+        "identity_id" -> q.getAs[Int]("identity_id"),
+        "master_objective_id" -> q.getAs[Int]("master_objective_id"),
+        "attempt_number" -> q.getAs[Int]("attempt_number"),
+        "assessment_id" -> q.getAs[String]("assessment_id"),
+        "assessment_type" -> q.getAs[String]("assessment_type"),
+        "sequence_number" -> q.getAs[Int]("sequence_number")
+      )
+      questions_list = q_el +: questions_list
+    }
+    val bkt_calculator = new com.k12.bkt.calculator.tasks.SimpleBayesianKnowledgeTracing()
+    val result_values: scala.collection.immutable.List[com.k12.bkt.calculator.data.ObjectiveBKT] = bkt_calculator.compute(questions_list)
+
+    result_values.map { row =>
+      val date_str = new org.joda.time.DateTime(row.timestamp).toString("yyyy-MM-dd HH:mm:ss")
+
+      org.apache.spark.sql.Row(
+        row.objectiveId,
+        row.identityId,
+        row.assessmentId,
+        date_str,
+        row.attemptNumber,
+        row.proficiency,
+        row.l0
+      )
+    }
+  }
+}
 ################################################## Connect HBase from Scala #############################################
 
 Pre-request: Make sure  /etc/hbase/conf/hbase-site.xml
