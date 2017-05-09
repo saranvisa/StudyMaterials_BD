@@ -1,4 +1,3 @@
-
 Open questions
 1. Don't know how it is going to behave for existing tables
 2. Need to check the ownership for the existing files/folders (HDFS)
@@ -106,8 +105,8 @@ $ sudo -u hdfs hdfs dfs -chown -R hive:hive /user/hive/warehouse
 4. Make sure hive enabled with Kerbeors
 
 # Try the below beeline command before and after kinit
-beeline -u "jdbc:hive2://ec2-34-194-113-157.compute-1.amazonaws.com:10000/default;principal=hive/ec2-34-194-113-157.compute-1.amazonaws.com@AWS.COM"
-beeline -u "jdbc:hive2://ec2-34-194-173-26.compute-1.amazonaws.com:10000/default;principal=hive/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM"
+beeline -u "jdbc:hive2://<hostname>:10000/default;principal=hive/<hostname>@AWS.COM"
+beeline -u "jdbc:hive2://<hostname>:10000/default;principal=hive/<hostname>@AWS.COM"
 
 5. Make sure impala service is added and enabled with kerberos
 
@@ -173,6 +172,42 @@ addprinc -pw hadoop1 hive@AWS.COM
 addprinc -pw hadoop1 hue@AWS.COM
 CM -> Admin -> security -> Generate missing credentials
 
+
+-----------Setup Privilege via CLI
+
+https://www.cloudera.com/documentation/enterprise/5-5-x/topics/sg_hive_sql.html#concept_c5d_11p_r4
+https://www.cloudera.com/documentation/enterprise/5-6-x/topics/sg_hdfs_sentry_sync.html
+https://www.cloudera.com/documentation/enterprise/5-5-x/topics/sg_hive_sql.html
+https://cwiki.apache.org/confluence/display/Hive/SQL+Standard+Based+Hive+Authorization
+
+
+CREATE ROLE [role_name];
+GRANT ROLE role_name [, role_name] TO GROUP <groupName> [,GROUP <groupName>]
+
+create role role_analyst;
+grant role role_ to 
+
+
+It has before and after Hive 0.13
+
+REVOKE [GRANT OPTION FOR]
+    priv_type [, priv_type ] ...
+    ON table_or_view_name
+    FROM principal_specification [, principal_specification] ... ;
+ 
+principal_specification
+  : USER user
+  | ROLE role
+ 
+priv_type
+  : INSERT | SELECT | UPDATE | DELETE | ALL
+
+
+## Hive SQL Syntax for use with Sentry
+https://www.cloudera.com/documentation/enterprise/5-5-x/topics/sg_hive_sql.html
+
+
+
 ---------- Issue1:
 Error: Error while compiling statement: FAILED: SemanticException No valid privileges
  User hdfs does not have privileges for CREATEDATABASE
@@ -198,6 +233,7 @@ GRANT ALL ON SERVER server1 TO ROLE admin WITH GRANT OPTION;
 Assign the role to a group.
 GRANT ROLE admin TO GROUP administrators;
 After these steps all users within the group administrators are allowed to manage hive priviledges
+
 
 ------------Issue3: Direct Active Directory Integration for Kerberos Authentication
 
@@ -295,12 +331,5 @@ GRANT ALL ON SERVER server1 TO ROLE admin WITH GRANT OPTION;
 Assign the role to a group.
 GRANT ROLE admin TO GROUP administrators;
 After these steps all users within the group administrators are allowed to manage hive priviledges
-
-----------------------------------------Connect to beeline
->beeline
->!connect jdbc:hive2://ec2-34-194-113-157.compute-1.amazonaws.com:10000/default;principal=hive/ec2-34-194-113-157.compute-1.amazonaws.com@AWS.COM
-
-
-
 
 
