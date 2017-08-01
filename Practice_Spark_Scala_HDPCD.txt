@@ -17,6 +17,11 @@ https://www.youtube.com/watch?v=ln4dpChqJPI&list=PLf0swTFhTI8pgc4wyhT8lIEJCPT08R
 	https://community.hortonworks.com/questions/64278/hdpcd-spark-certification.html
 
 7. Dataset 	
+
+############################################################ Quick Reference #####################################
+
+http://community.cloudera.com/t5/Advanced-Analytics-Apache-Spark/Saving-dataframe-using-scala-intellij-throws-exception/m-p/58273#M2855?eid=1&aid=1
+
 #################################################################### Final preparation  ###########################
 1. Setup Hortonwork environment
 2. Configure Spark properties
