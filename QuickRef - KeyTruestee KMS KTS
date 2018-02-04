@@ -1,0 +1,76 @@
+1. Available Services
+	a. Key Trustee KMS 	(In Master Cluster - Cluster 1), Port # 16000, 16001
+	b. Key Trustee Server 	(In a separate Cluster - Cluster 2), Port # 11371
+	c. Database		(In a separate Cluster - Cluster 2), Port # 11381
+
+2. Pre-request to set up KMS/KTS
+	a. HDFS Transparaent Encryption, the "Set up HDFS Data At Rest Encryption"
+		CM -> Cluster dropdown -> "Set up HDFS Data At Rest Encryption" button -> It will sohw all the below pre-request
+	b. Enable TLS/SSL otherwise, all of your encryption keys will be transmitted in plain text. (Strongly Recommended)
+	c. Add a dedicated cluster for the Key Trustee Server
+	d. Install Key Trustee Server binary using packages or parcels
+	f. Add Key Trustee Server Service (In a separate cluster - cluster 2, this is first before KMS)
+	g. Add Key Trustee KMS Service (In Master cluster - Cluster 1, it has dependency or pre-request on Key Trustee Server)
+	h. Restart stale services and redeploy client configuration
+	j. Validate Data Encryption - Sample steps given below
+	k. Other supporting Services: Cloudera Navigator Key Trustee Server, Zookeeper
+
+3. About Key Trustee Server - Why do we need a dedicated Linux Node/host for KMS & KTS? 
+	It is recommended to have a separate Cluster & nodes for Key Trustee Server & Database
+
+	It is recommended to have a separate Host/Node for KMS in the master cluster
+
+	To isolate key Trustee Server from other enterprise data hub (EDH) Services, deploy Key Trustee Server on a dedicated hosts in a separate cluster in Cloudera Manager. It provides the following benefit
+	a. You can restart your EDH cluster without restarting key Trustee Server, avoiding interruption to other clusters or clients that use the same Key Trustee server instance
+	b. You can manage key trustee server upgrade cycle independently of other cluster components.
+	c. You can limit access to the key trustee server hosts to authorized key administrator only, reducing the attack surface of the system.
+	d. Resource contention is reduced. Running key tustee server and key trustee KMS servers on dedicated hosts (Linux nodes) prevents other cluster services from reducing available resources (Such as CPU and Memory) and creating bottlenecks.
+
+4. About Key Trustee KMS/KTS
+	a. The Hadoop Key Management Service backed by Cloudera Navigator Key Trustee Server for enterprise-grade key storage and protection. Requires CDH 5.3+ and existing Key Trustee Servers. Before adding this service, ensure that you have installed the key Trustee Binaries, which are not included in CDH
+	b. Cloudera strongly recommends using Key Trustee KMS in production environments to improve the security, durablity and scalability of your cryptographic key management
+	c. If you are instaling Key Trustee Server for use with Transparent Encryption, the "set up HDFS Data At Rest Encryption" wizard installs and configures Key Trustee Server
+
+
+
+5. How to check the KMS/KTS Services ar erunning
+	1. CM -> Key Trustee Server cluster -> Hosts -> Get the host/node where KMS Server is installed
+	2. Option1: Click on host -> Process (menu) -> it will show the running process on the host
+	3. Option2: login to the node and run the command 'service keyhsm status'
+
+6. How to "Validate Data Encryption"? few sample steps
+
+	a. Create a Key and directory
+		# Initialize Kerberos
+		kinit <KEY_ADMIN_USER>
+		hadoop key create mykey1
+		hadoop fs -mkdir /tmp/zone1
+
+	b. Create a zone and link to the key
+		# Initialize kerbeors
+		kinit hdfs
+		hdfs crypto -createZone -keyname mykey1 -path /tmp/zone1
+
+	c. Create a file, put it in  your zone and ensure the file can be decrypted.
+		# Initialize Kerberos
+		kinit <KEY_ADMIN_USER>
+		echo "Helo world" > /tmp/hellowworld.txt
+		hadoop fs -put /tmp/hellowworld.txt
+		hadoop fs -cat /tmp/zone1/hellowworld.txt
+		rm /tmp/hellowworld.txt
+
+	d. Ensure the file is stored as encrypted
+		# Initialize kerberos
+		kinit hdfs
+		hadoop fs -cat /.reserved/raw/tmp/zone1/hellowworld.txt
+		hadoop fs -rm -R /tmp/zone1
+
+7. Other important Notes:
+	a. You must manually create encryption keys and encryption zones and move data into them
+	b. After installing Key Trustee Server, you must initalize it before it is operational
+	c. It is absoloutely critical that you follow the documented procedures for encrypting and decrypting data, and that you regularly back up the encryption keys and configuration files
+
+8. Install KMS
+	
+
+
