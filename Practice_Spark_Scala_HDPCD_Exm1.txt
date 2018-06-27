@@ -1,0 +1,567 @@
+TIPS:
+
+1. The general question pattern is: read this from here, do something with it, write the results to here. 
+2. You need to answer 5 out of 7 tasks correctly
+3. you need to store the scripts that you used in local directory
+4. "Delimiter": Convert DF to RDD at the end when you have results. Also you dont have to worry about csv format. 
+   In exam they just mention the delimiters that should be present in the out. e.g. output should be comma delimited or tab delimited.
+   
+   val df = sqlContext.sql("select order_id, order_status from retail_db.orders") ## This will create dataframe.
+   val rddMap = df.map(rec => (rec(0) + "\t" + rec(1))) - This will convert DF to RDD with tab delimited output.
+   rddMap.saveAsTextFile("output location")
+
+5. on working with ORC format with Hive tables ( creating a table and storing the data in Hive)   
+5.1 "File format": To read different format files: use sqlContext.read (or) sqlContext.sql 
+			  Ex: sqlContext.read.format("orc").load("input dir")
+			  
+6.  "File format": To write different format files: use dataframe.write.format("orc").save("hdfs/local path")
+			  Ex: empOrcDF.write.format("orc").save("/user/saranvisa/spark_exam/emp_orc")
+
+
+7. To store in HDFS: cat /etc/hadoop/conf/core-site.xml  and get the “fs.defaultFS”
+		hdfs://nn01.itversity.com:8020/user/saranvisa/spark_exam/emp_comma
+8. To store in Local: file:///home/saranvisa/spark/emp_comma		
+9. Login
+		spark-shell
+		spark-shell --conf spark.ui.port=22222 --master yarn-client
+		spark-shell --conf spark.ui.port=22322 --master yarn-client
+		spark-shell --packages com.databricks:spark-avro_2.10:2.0.1 ## For ITVersity, scala 2.10 & Spark 1.6.2
+		spark-shell --packages com.databricks:spark-avro_2.11:3.2.0 ## For Scala 2.11 & Spark 2
+		
+		spark-shell --packages com.databricks:spark-csv_2.11:1.5.0	## For Scala 2.11
+		spark-shell --packages com.databricks:spark-csv_2.10:1.5.0  ## For Scala 2.10
+
+ 
+================================================================================================================================================== 
+ Overall Usecases for
+ 1. Read & Write Different file formats: Text, CSV, JSON, Parquet, ORC, Avro
+ 2. Read & Write tabels from Hive: Text, CSV, JSON, Parquet, ORC, Avro
+ 3. Save file with different delimiters: , | Tab
+ 4. Separate Header from Data while reading and writing
+ 5. All the above operations with Dataframes & RDD
+ 6. Case class for text File, registerTempTable
+ 7. Execute Spark JAR in Yarn mode, Configure Spark properties
+ 8. Find Min, Max, Top 5 by particular column, etc (usecase1)
+ 9. Get revenue for each day joining orders and order_items (usecase 12)
+ 10.Create script & store in Notepad. Including create objectname, class
+ 11.Accumulator 
+ 
+
+ 
+==================================================================================================================================================
+## Final preparation
+0. Usecase: Try the usecase provided for other spark related certification
+	https://hortonworks.com/hadoop-tutorial/a-lap-around-apache-spark/
+1. Usecase1: Find Min, Max, Top 5 by particular column, etc
+2. Usecase2: Different file format (ITVersity): https://www.youtube.com/watch?v=QC1gFfTwrhM&feature=push-lbss&attr_tag=TPKqa0TVOjRkjxsC-6
+
+1. UseCase1: Get a text file and create a hive table in parquet format and insert data into it.
+2. Usecase2: Develop a spark application using Scala to get daily revenue from a TEXT FILE (using RDD)
+	ITversity : http://discuss.itversity.com/t/exercise-05-develop-spark-application-using-scala-to-get-daily-revenue-per-department/2538
+3. Usecase3: Develop a spark application using Scala to get daily revenue from a TEXT FILE (using DataFrames)
+4. Usecase4: SEPARATING THE HEADER FROM THE DATA
+	https://hortonworks.com/hadoop-tutorial/using-hive-with-orc-from-apache-spark/#creating-hivecontext
+	val data = yahoo_stocks.mapPartitionsWithIndex { (idx, iter) => if (idx == 0) iter.drop(1) else iter }
+5. Usecase5: Write dataframe and RDD into different file format
+6. Usecase6: Read dataframe and RDD from different file format
+7. Usecase7: Execute spark JAR in yarn mode
+8. Usecase8: Create a hive table and load data from CSV to hive table.
+9. Usecase9: Avro, ORC
+	ORC: https://databricks.com/blog/2015/07/16/joint-blog-post-bringing-orc-support-into-apache-spark.html
+	sc.parallelize(records).toDF().write.format("orc").save("people")
+	val people = sqlContext.read.format("orc").load("people")
+	people.registerTempTable("people")
+
+10.Usecase10: Process the CSV file (DF to RDD) and store the result in Different format (Comma, pipe, tab)	
+11.Usecase11: Pre-request: Create two AVRO tables in hive. Process those avro tabels and save result in different format in HDFS
+12.Usecase12: Get revenue for each day joining orders and order_items: http://discuss.itversity.com/t/exercise-19-dataframes-and-spark-native-sql/757
+13.Usecase13: Get top10 http://discuss.itversity.com/t/exercise-17-get-topn-dense-or-spark/745/2
+
+
+
+	
+
+2. Usecase2: Get the parquet hive table created in Usecase1 and apply filter and save it in HDFS in text format
+
+
+2. UseCase2: Get a ORC file and create a hive table and insert ORC data into it
+			now we can try to read the ORC file with:
+			val yahoo_stocks_orc = hiveContext.read.format("orc").load("yahoo_stocks_orc")
+			
+3. Usecase3: Read data from a hive table and write it into HDFS as ORC
+4. UseCase4: Read data from a hive table and write it into HDFS as Parquet format
+5. Usecase5: Write a RDD (or) DataFrames to Local. Ex: ts.saveAsTextFile("file:///home/me/z11") But this may create trouble as follows:
+	https://community.cloudera.com/t5/Advanced-Analytics-Apache-Spark/Writing-from-Spark-to-a-shared-file-system/m-p/54257
+6. Usecase6: 
+		a. There are two text files file1 and file2
+		b. Option1: Filter some records from file1 and join with file2 Using RDD
+		c. Option2: Filter some records from file1 and join with file2 Using DataFrames
+		d. Create the result file as table in hive
+		Ref: http://discuss.itversity.com/t/exercise-19-dataframes-and-spark-native-sql/757/2
+7. Usecase7: Import a big table from MySQL to HDFS using SQOOP as text file, convert it to ORC and store it in Hive. DO NOT apply ORC in SQOOP
+8. Usecase8: Now we need to separate the data into a new RDD where we do not have the header above 
+		Ref: https://hortonworks.com/hadoop-tutorial/using-hive-with-orc-from-apache-spark/		
+			
+
+			
+##############################################TIPS ##############################################
+1. DataFrames
+	a. df.show # To return all records
+	b. df.first # To return first record
+	c. df.printSchema  # To get the structure
+	
+################### Pre-request: Sample hive tables  ############################################	
+create table qa.test_emp(empid  int,
+empname   string,
+deptid    int,
+country   string);
+
+create table qa.test_dept(deptid  int,
+deptname string);	
+
+insert into qa.test_emp values (10,'Jacob',100,'USA');
+insert into qa.test_emp values (11,'Movab',100,'Canada');
+insert into qa.test_emp values (15,'Arock',101,'USA');
+insert into qa.test_emp values (13,'William',102,'USA');
+insert into qa.test_emp values (12,'Dhiya',105,'USA');
+insert into qa.test_emp values (20,'Sachein',100,'USA');
+
+insert into qa.test_dept values (100,'Finance');
+insert into qa.test_dept values (101,'Software');
+insert into qa.test_dept values (102,'Marketting');
+insert into qa.test_dept values (104,'Security');
+insert into qa.test_dept values (105,'Medical');
+
+
+###################  Usecase1: Find Min, Max, Top 5 by particular column, etc. ##############
+
+http://discuss.itversity.com/t/find-the-following-from-the-given-products-csv-for-those-who-are-preparing-for-cca175/2516/7
+
+Products.csv contains 
+storeID,productCategory,Product Id,Product_Price
+100,Diary,1001,5.00
+100,Diary,1002,1.50
+100,Diary,1003,2.50
+100,Diary,1004,0.75
+100,Diary,1005,6.50
+100,Diary,1006,6.50
+100,Diary,1007,20.25
+100,Diary,1008,50.00
+100,Diary,1009,10.00
+100,Diary,1010,1.50
+101,Diary,101,2.50
+101,Diary,102,15.00
+101,Diary,103,12.50
+101,Diary,104,3.00
+101,Diary,105,16.50
+101,Diary,106,31.00
+101,Diary,107,7.80
+101,Diary,108,45.00
+101,Diary,109,9.95
+101,Diary,110,1.25
+100,Meat,2001,15.00
+100,Meat,2002,25.00
+100,Meat,2003,25.00
+100,Meat,2004,13.00
+100,Meat,2005,9.00
+100,Meat,2006,26.00
+100,Meat,2007,12.00
+100,Meat,2008,13.00
+100,Meat,2009,75.00
+100,Meat,2010,15.00
+101,Meat,201,14.00
+101,Meat,202,23.00
+101,Meat,203,21.00
+101,Meat,204,13.00
+101,Meat,205,10.00
+101,Meat,206,25.00
+101,Meat,207,11.00
+101,Meat,208,13.00
+101,Meat,209,80.00
+101,Meat,210,1.25
+
+1) Find the maximum / Minimum priced product
+2) Find the maximum / Minimum priced product at the category Name level
+3) Find the maximum / Minimum priced product at the category Name level and Store Level
+4) Find the top 5 priced products
+5) Find the Top 3 Priced Products based on Store Only
+6) Find the Top 3 Priced Products based on Store and Category Only
+
+## Soln:
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.hive.HiveContext
+
+val conf = new SparkConf().setAppName("Process the Product data").setMaster("yarn-client")
+val sc = new SparkContext(conf)		## Not required in Spark Command line
+val sqlContext = new SQLContext(sc)
+import sqlContext.implicits._
+
+val dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/product.csv")
+val withoutHeaderRDD = dataRDD.mapPartitionsWithIndex((idx,itr)=> if (idx==0) itr.drop(1) else itr)
+case class product_case(storeid:Int, productcategory:String, productid:Int, product_price:Float)
+val dataDF = withoutHeaderRDD.map(_.split(",")).map(rec=> product_case(rec(0).toInt, rec(1).toString(), rec(2).toInt, rec(3).toFloat)).toDF()
+dataDF.registerTempTable("product_temp")
+sqlContext.sql("select * from product_temp").collect.foreach(println)
+
+## Find the maximum / Minimum priced product
+val min_prc_prodtDF = sqlContext.sql("select a.productid, min(a.product_price) as min_price from product_temp a group by a.productid order by min_price limit 1 ")
+val max_prc_prodtDF = sqlContext.sql("select a.productid, max(a.product_price) as max_price from product_temp a group by a.productid order by max_price desc limit 1 ")
+
+## Find the maximum / Minimum priced product at the category Name level
+val min_prc_prodtCatDF = sqlContext.sql("select a.productcategory, min(a.product_price) as min_price from product_temp a group by a.productcategory")
+val max_prc_prodtCatDF = sqlContext.sql("select a.productcategory, max(a.product_price) as max_price from product_temp a group by a.productcategory")
+
+## Find the maximum / Minimum priced product at the category Name level and Store Level
+val min_prc_prodtCatStoreDF = sqlContext.sql("select a.productcategory, a.storeid, min(a.product_price) as min_price from product_temp a group by a.productcategory,a.storeid")
+val max_prc_prodtCatStoreDF = sqlContext.sql("select a.productcategory, a.storeid, max(a.product_price) as max_price from product_temp a group by a.productcategory,a.storeid")
+
+## Find the top 5 priced products
+val top5price_prodtDF = sqlContext.sql("select a.* from product_temp a order by a.product_price desc limit 5")
+
+################### UseCase2: Get a text file and create a hive table in parquet format and insert data into it. ##############
+
+# About the plan
+1. Get the text data using RDD
+2. Get the RDD into a DataFrames (SQLContext)
+3. Register the dataframe as a temporary table
+4. Create a hive table stored as ORC format (HiveContext)
+5. Move the data from temporary table to hive
+
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.hive.HiveContext
+import org.apache.spark.sql.hive.orc._
+import org.apache.spark.sql._
+
+val conf = new SparkConf().setAppName("move text file to hive as ORC").setMaster("yarn-client")
+val sc = new SparkContext(conf)
+val dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/empid_name.txt")
+dataRDD.collect.foreach(println)	## For testing
+
+val df = dataRDD.toDF()				## withtout Case Class, for testing
+df.show								## For testing
+
+case class empid_name_case(empid:Int, empname:String)
+
+val sqlContext  = new SQLContext(sc)	## To connect to data frame tables
+val hiveContext = new HiveContext(sc) 	## To connect to hive tables
+import sqlContext.implicits._
+import hiveContext.implicits._
+
+
+val df = dataRDD.map(_.split(",")).map(rec => empid_name_case(rec(0).toInt, rec(1).toString())).toDF()
+df.show								## For testing
+df.registerTempTable("empid_name_df")
+
+sqlContext.sql("show tables").collect().foreach(println)	## To get list of registered Temp tables
+hiveContext.sql("show tables").collect().foreach(println)
+
+hiveContext.sql("select * from empid_name_df").collect.foreach(println)  ## Option1: Get the value from df directly
+val dataDF1 = sqlContext.sql("select * from empid_name_df")  			## Option2: 
+
+hiveContext.sql("CREATE TABLE qa.emp_spark_orc STORED AS ORC AS SELECT * from empid_name_df")
+#sqlContext.sql("create table qa.emp_spark_orc as select * from empid_name_df")  ## NOT WORKING
+
+df.write.save("/user/saranvisa/scala-sbt-input/emp_spark_parq")
+hiveContext.sql("create external table qa.emp_spark_parq (empid int, empname string) stored as parquet location '/user/saranvisa/scala-sbt-input/emp_spark_parq'")
+
+
+############## Usecase2: Develop a spark application using Scala to get daily revenue from a TEXT FILE (using RDD) #######################
+	Understand data model
+		a. orders – for order_date and order_status
+		b. order_items – for revenue
+
+	Use sbt to develop this
+		Get all the completed or closed orders and then compute total revenue for each day 
+		Print order_date and order_revenue
+		Develop the program using sbt and eclipse *
+		Understand DAG for each stage
+====================
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.hive.HiveContext
+
+val conf = new SparkConf().setAppName("UC2").setMaster("yarn-client")
+val sc = new SparkContext(conf)
+val ordersRDD = sc.textFile("/user/saranvisa/scala-sbt-input/orders")
+val orderitemsRDD = sc.textFile("/user/saranvisa/scala-sbt-input/order_items")
+
+ordersRDD.take(5).foreach(println)		## For validation
+orderitemsRDD.take(5).foreach(println)  ## For validation
+
+val ordersCompletedRDD = ordersRDD.filter(rec=> rec.split(",")(3) == "COMPLETE" || rec.split(",")(3) == "CLOSED")
+val ordersRDDFilter = ordersCompletedRDD.map(rec=> (rec.split(",")(0).toInt, rec.split(",")(1)))
+
+ordersCompletedRDD.count						## For validation
+ordersCompletedRDD.collect.foreach(println)		## For validation
+ordersRDDFilter.take(5).foreach(println)		## For validation
+
+val orderitemsRDDFilter = orderitemsRDD.map(rec => (rec.split(",")(1).toInt,rec.split(",")(4).toFloat))
+val orderitemsRDDReduce = orderitemsRDDFilter.reduceByKey((acc,value) => acc+value)
+orderitemsRDDReduce.collect.foreach(println) 	## For validation
+
+val ordersJOINRDD = ordersRDDFilter.join(orderitemsRDDReduce)
+val ordersResult1RDD=ordersJOINRDD.map(rec=> (rec._2._1 , rec._2._2))
+ordersResult1RDD.collect.foreach(println)    	## For validation
+
+val ordersResult2RDD = ordersResult1RDD.reduceByKey((acc,value) => acc+value)
+ordersResult2RDD.take(5).foreach(println)		## For validation
+
+############## Usecase3: Develop a spark application using Scala to get daily revenue from a TEXT FILE (using DataFrames) #######################
+
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.hive.HiveContext
+
+val conf = new SparkConf().setAppName("UC2").setMaster("yarn-client")
+val sc = new SparkContext(conf)
+val sqlContext = new SQLContext(sc)
+import sqlContext.implicits._
+
+val ordersRDD = sc.textFile("/user/saranvisa/scala-sbt-input/orders")
+val orderitemsRDD = sc.textFile("/user/saranvisa/scala-sbt-input/order_items")
+
+ordersRDD.take(5).foreach(println)		## For validation
+orderitemsRDD.take(5).foreach(println)  ## For validation
+
+case class ordersCase(orderId:Int, orderDate:String,orderNo:Int, orderStatus:String)
+val ordersDF = ordersRDD.map(rec=> rec.split(",")).map(rec=> ordersCase(rec(0).toInt, rec(1).toString(), rec(2).toInt, rec(3).toString())).toDF()
+
+ordersDF.show							## For validation
+
+ordersDF.registerTempTable("orders_DF")
+
+sqlContext.sql("select * from orders_DF").collect.foreach(println)  											## For validation
+sqlContext.sql("select * from orders_DF where orderStatus in ('COMPLETE','CLOSED')").collect.foreach(println)  	## For validation
+
+case class ordersItemCase(orderItemID:Int,orderID:Int,orderNo:Int, quantity:Int, total:Float, price:Float)
+val orderitemsDF = orderitemsRDD.map(_.split(",")).map(rec=> ordersItemCase(rec(0).toInt, rec(1).toInt, rec(2).toInt, rec(3).toInt, rec(4).toFloat, rec(5).toFloat)).toDF()
+
+orderitemsDF.count 						## For Validation
+orderitemsDF.show 						## For Validation
+
+orderitemsDF.registerTempTable("orderitems_DF")
+
+sqlContext.sql("select * from orderitems_DF").collect.foreach(println)											## For Validation
+
+val orders_result_DF =  sqlContext.sql("select odf.orderDate, sum(oidf.total)  from orders_DF odf join orderitems_DF oidf on odf.orderId = oidf.orderID where orderStatus in ('COMPLETE','CLOSED') group by odf.orderDate" )
+
+## to compare the result between RDD & DataFrames
+ordersResult2RDD.take(10).foreach(println)
+orders_result_DF.filter($"orderDate" > "2013-08-10 00:00:00.0").show
+
+
+############## Usecase4: Calculate daily revenue from two hive tables and save the result in HDFS as Parquet, avro and ORC #######################
+
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.hive.HiveContext
+
+val conf = new SparkConf().setAppName("Test1").setMaster("yarn-client")
+val sc = new SparkContext(conf)
+
+val sqlContext = new SQLContext(sc)
+val hiveContext = new HiveContext(sc)
+
+val ordersDF = hiveContext.sql("select * from qa.orders").toDF()			## For validation
+val orderItemsDF = hiveContext.sql("select * from qa.order_items").toDF()	## For validation
+
+val orderResultDF = hiveContext.sql("select ord.order_date, sum(orditem.order_item_subtotal) from qa.orders ord join qa.order_items orditem on orditem.order_item_order_id = ord.order_id group by ord.order_date").toDF()
+
+orderResultDF.write.save("/user/saranvisa/scala-sbt-input/orderResultDF")  ## To store as parquet
+orderResultDF.select("col1", "col2").write.save("user/saranvisa/scala-sbt-input/orderResultDF")
+
+### Avro and ORC are pending
+
+
+#################### Usecase 5: Join two tabels test_emp, test_dept and get all columns and write result in HDFS in differnt format ################
+
+1. Change the column order and result order
+2. Write Dataframe format: CSV, JSON, Textfile delimiter with '|', Parquet
+3. Write RDD format: CSV, JSON, Textfile delimiter with '|', Parquet
+4. dataRDD.saveAsObjectFile ## This option is Only available in Scala and not in Python
+
+
+
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.hive.HiveContext
+import com.databricks.spark._
+
+val conf = new SparkConf().setAppName("Test").setMaster("yarn-client")
+val sc = new SparkContext(conf)
+val sqlContext = new SQLContext(sc)
+import sqlContext.implicits._
+val hiveContext = new HiveContext(sc)
+
+val dataDF = hiveContext.sql("select e.empid, e.empname, e.deptid, d.deptname, e.country from qa.test_emp e join qa.test_dept d on e.deptid = d.deptid order by e.empid desc").toDF()
+
+val dataRDD = hiveContext.sql("select e.empid, e.empname, e.deptid, d.deptname, e.country from qa.test_emp e join qa.test_dept d on e.deptid = d.deptid order by e.empid desc")
+
+dataDF.show
+
+## JSON
+dataDF.write.json("/user/sksivanandan/scala-sbt-output/emp_dept_json")
+
+## PARQUET
+dataRDD.saveAsParquetFile("/user/sksivanandan/scala-sbt-output/emp_dept_parquet1")
+dataRDD.write.parquet("/user/sksivanandan/scala-sbt-output/emp_dept.parquet")
+dataDF.write.parquet("/user/sksivanandan/scala-sbt-output/emp_dept_parquet")
+
+
+
+## CSV  ## NOT working
+import com.databricks.spark._
+dataDF.write.format("com.databricks.spark.csv").option("header","true").save("/user/sksivanandan/scala-sbt-output/emp_dept_csv")	
+
+## CSV  - This is working in K12 but not in ITVersity
+dataDF.write.orc("/user/sksivanandan/scala-sbt-output/emp_dept") 
+
+
+#################### Usecase 6: Run SQL on files directly ################
+
+## To read a parquet file directly in dataFrame
+val parquetDF = sqlContext.sql("SELECT * FROM parquet.`/user/sksivanandan/scala-sbt-output/emp_dept.parquet`")
+val parquetDF1 = sqlContext.sql("select * from parquet.`/user/sksivanandan/scala-sbt-output/emp_dept_parquet`")
+parquetDF.show
+
+## Read the parquet using sqlContext.read
+val parquetDF2 = sqlContext.read.parquet("/user/sksivanandan/scala-sbt-output/emp_dept_parquet")
+parquetDF2.show
+
+## Read the JSON file
+val jsonDF = sqlContext.sql("select * from json.`/user/sksivanandan/scala-sbt-output/emp_dept_json`")
+val jsonDF1 = sqlContext.read.json("/user/sksivanandan/scala-sbt-output/emp_dept_json")
+jsonDF.show
+
+## CSV: This method is NOT working for csv. so need to use RDD as  follows
+val dataDF = sqlContext.sql("select * from csv.`/user/saranvisa/scala-sbt-input/product.csv`")
+
+val dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/product.csv")
+val withoutHeaderRDD = dataRDD.mapPartitionsWithIndex((idx,itr)=> if (idx==0) itr.drop(1) else itr)
+case class product_case(storeid:Int, productcategory:String, productid:Int, product_price:Float)
+val dataDF = withoutHeaderRDD.map(_.split(",")).map(rec=> product_case(rec(0).toInt, rec(1).toString(), rec(2).toInt, rec(3).toFloat)).toDF()
+dataDF.registerTempTable("product_temp")
+sqlContext.sql("select * from product_temp").collect.foreach(println)
+
+
+
+#################### Usecase 8: Create a hive table and load data from CSV/ORC to hive table ################
+https://community.hortonworks.com/questions/4292/how-do-i-create-an-orc-hive-table-from-spark.html
+https://hortonworks.com/blog/bringing-orc-support-into-apache-spark/
+Ref: From Spark Guide PDF
+
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.hive.HiveContext
+import org.apache.spark.sql._
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.hive.orc
+
+
+val conf = new SparkConf().setAppName("Test").setMaster("yarn-client")
+val sc = new SparkContext(conf)
+
+val dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/product.csv")
+val withoutHeaderRDD = dataRDD.mapPartitionsWithIndex((idx,itr)=> if (idx==0) itr.drop(1) else itr)
+
+
+val sqlContext = new SQLContext(sc)
+import sqlContext.implicits._
+
+val hiveContext = new HiveContext(sc)
+
+hiveContext.sql("create table qa.test_csv(code string, description string, val1 int, val2 float) row format delimited fields terminated by '\t' stored as textfile")
+
+hiveContext.sql("create external table  qa.test_csv (code float, code1 float, date1 string, vall string, code3 int) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' STORED AS TextFile")
+hiveContext.sql("LOAD DATA INPATH '/user/saranvisa/scala-sbt-input/product.csv' OVERWRITE INTO TABLE qa.test_csv")
+
+
+#################### Usecase9: Create a hive table and load data from AVRO to hive table ################
+
+spark-shell --packages com.databricks:spark-avro_2.11:3.2.0
+import com.databricks.spark.avro._
+
+# To Read Avro Data
+val df = sqlContext.read.format("com.databricks.spark.avro").load("input dir")
+
+# To Write Data in Avro Data
+df.write.format("com.databricks.spark.avro").save("output dir")
+
+
+################ Usecase10: Process the CSV file (DF to RDD) and store the result in Different format (Comma, pipe, tab)  ################
+
+## spark-shell --packages com.databricks:spark-csv_2.10:1.5.0
+## import com.databricks.spark.csv._
+
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.hive.HiveContext
+import org.apache.spark.sql.hive.orc
+
+val conf = new SparkConf().setAppName("Test").setMaster("yarn-client")
+val sc = new SparkContext(conf)
+val sqlContext = new HiveContext(sc)
+import sqlContext.implicits._
+
+
+## To read CSV data
+val dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/product.csv")
+val datawithoutHeaderRDD = dataRDD.mapPartitionsWithIndex((idx,itr)=> if (idx==0) itr.drop(1) else itr)
+
+val dataFilterRDD = datawithoutHeaderRDD.filter(rec => rec.split(",")(0).toInt == 100)
+
+case class product(storeId:Int,productCategory:String, productID:Int, productPrice:Float)
+val dataFilterDF  = datawithoutHeaderRDD.map(rec=>rec.split(",")).map(rec=> product(rec(0).toInt, rec(1).toString(), rec(2).toInt, rec(3).toFloat)).toDF()
+
+dataFilterDF.registerTempTable("tmpProduct")
+
+sqlContext.sql("select * from tmpProduct").collect.foreach(println)
+
+val resultDF = sqlContext.sql("select productCategory, sum(productPrice) from tmpProduct where storeId = 100 group by productCategory")
+
+## DF to RDD
+val resultRDD  = resultDF.map(rec => (rec(0), rec(1)))
+val resultRDD1 = resultDF.map(rec => (rec(0) + "|"  +  rec(1)))
+val resultRDD2 = resultDF.map(rec => (rec(0) + ","  +  rec(1)))
+val resultRDD3 = resultDF.map(rec => (rec(0) + "\t"  +  rec(1)))
+
+## Save the result to HDFS
+resultRDD.saveAsTextFile("/user/saranvisa/scala-sbt-output/resultrdd")
+resultRDD1.saveAsTextFile("/user/saranvisa/scala-sbt-output/resultrdd_pipe")
+resultRDD2.saveAsTextFile("/user/saranvisa/scala-sbt-output/resultrdd_comma")
+resultRDD3.saveAsTextFile("/user/saranvisa/scala-sbt-output/resultrdd_tab")
+
+## Do NOT store RDD as it is. Because the resul will be in tupple like below 
+ hdfs dfs -cat /user/saranvisa/scala-sbt-output/resultrdd/part-0*
+(Diary,104.5)
+(Meat,228.0)
+
+## Result as COMMA separated
+hdfs dfs -cat /user/saranvisa/scala-sbt-output/resultrdd_comma/part-00*
+Diary,104.5
+Meat,228.0
+
+## Result as PIPE
+hdfs dfs -cat /user/saranvisa/scala-sbt-output/resultrdd_pipe/part-00*
+Diary|104.5
+Meat|228.0
+
+## Result as TAB delimiter
+hdfs dfs -cat /user/saranvisa/scala-sbt-output/resultrdd_tab/part-00*
+Diary   104.5
+Meat    228.0
+
+## Save the result to LOCAL
+resultRDD.saveAsTextFile("file:///home/myfolder/resultRDD")
+
+
