@@ -1,0 +1,325 @@
+ Overall Usecases for
+ 1. Read & Write Different file formats: Text, CSV, JSON, Parquet, ORC, Avro
+ 2. Separate Header from Data while reading and writing
+ 3. Save file with different delimiters: , | Tab
+ 4. Accumulator - Covered , Broadcast - Ignored
+ 5. Complex Hive queries
+ 6. Compress the file
+ 7. Miscellanious commands 
+ 
+ 8. Execute Spark JAR in Yarn mode, Configure Spark properties
+	Look at the Spark documentation for the command line switches to tell you how to submit the job on Yarn.
+ 
+ 9. RDD Filter - might be useful for Accumator & Broadcast
+ 
+ 10. Read & Write tables from Hive: Text, CSV, JSON, Parquet, ORC, Avro
+
+ 
+	
+ 11.Create script & store in Notepad. Including create objectname, class
+ 12. All the above operations with Dataframes & RDD (Filter, map, flatmap, etc)
+ 13. Case class for text File, registerTempTable 
+ 
+===== UPdate from Vijitha
+
+I attempted HDPCD-Spark .Sharing my experience .. Hope this helps!
+
+ 5 out of 7 need to be correct.
+The questions were not difficult but given a limited, it is very important to first select the 5 Questions you'd be most comfortable with.
+
+spark-sql- 3,core-spark-2,accumulator-1,spark-submit of a given JARfile-1
+
+The SQL queries were not complicated.just that we need time to understand the problem statement,work at pace in their environment.There were n/w issues couple of times towards the end, but the proctor mentioned its because my system's speed.They run a speedtest prior to the exam.
+
+As most mentioned, its majorly about managing time to get atleast 5 correctly done.
+
+The pattern is 
+1) get the data from //hdfs path1
+2) description details in multiple lines- on the data transformation details
+3)store the o/p data in //hdfs path2
+4) store the script in // hdfs path3
+
+hdpcd-spark tutorial (60+ videos) + other spark-sql videos from itversity
+should be sufficient - and again, lot of handson on new scenarios - to get used to the exam pattern would help.
+
+======= Updates1 in ITveristy
+Hadoop services were not up. I followed the recommended steps mentioned in the exam instructions to no avail. I highlighted it to proctor help but they were not of any help. After struggling with it for an hour , proctor finally called Hortonworks exam support and they resolved the issue. Good thing was that they reset my timer and was given full 2 hours for the exam
+
+Exam is on a Ubuntu machine on cloud and I practiced on my Windows laptop. So it took me considerable time to get used to the environment ,like Alt-tab was not working, Cntrl-C, Cntrl-V was not working. Also the screen resolution has to be made 1600*900 which I forgot to do. All these cost me some precious minutes. In the hindsight I think practicing using Cygwin would be wiser.
+
+set to a size larger than 1600x900 before attempting to start the exam
+ 
+ 
+#################################### Usecase1: READ & WRITE different file formats ####################################
+TEXT: (RDD)
+===========
+val dataRDD_txt = sc.textFile("/user/saranvisa/scala-sbt-input/empid_name.txt")
+dataRDD_txt.saveAsTextFile("/user/saranvisa/scala-sbt-output/resultrdd")
+
+CSV: (RDD)
+==========
+val dataRDD_csv = sc.textFile("/user/saranvisa/scala-sbt-input/product.csv")
+dataRDD_csv.saveAsTextFile("/user/saranvisa/scala-sbt-output/empRDD.csv")
+
+JSON: (DataFrame)
+=================
+val empDF_json = sqlContext.read.json("/user/saranvisa/spark_exam/emp_json.json")
+empDF_json.write.json("/user/saranvisa/spark_exam/emp_json1.json")
+
+ORC: (DataFrame)
+================
+val empDF_orc = sqlContext.read.orc("hdfs://nn01.itversity.com:8020/user/saranvisa/spark_exam/emp_orc")
+empDF_orc.write.format("orc").save("hdfs://nn01.itversity.com:8020/user/saranvisa/spark_exam/emp_orc1")
+
+Parquet: (DataFrame)
+====================
+val empDF_parquet = sqlContext.read.parquet("hdfs://nn01.itversity.com:8020/user/saranvisa/spark_exam/emp_parquet")
+empDF_parquet.write.format("parquet").save("hdfs://nn01.itversity.com:8020/user/saranvisa/spark_exam/emp_parquet1")
+
+Avro: (DataFrame)
+=================
+Login with: spark-shell --packages com.databricks:spark-avro_2.10:2.0.1    
+import com.databricks.spark.avro._
+val empDF_avro = sqlContext.read.format("com.databricks.spark.avro").load("/user/saranvisa/spark_exam/emp_avro.avro")
+empDF_avro.write.format("com.databricks.spark.avro").save("/user/saranvisa/spark_exam/emp_avro1.avro")  
+
+
+
+#################################### Usecase2: SEPARATING THE HEADER FROM THE DATA  ###############################
+
+https://hortonworks.com/hadoop-tutorial/using-hive-with-orc-from-apache-spark/#creating-hivecontext
+	
+val data = yahoo_stocks.mapPartitionsWithIndex { (idx, iter) => if (idx == 0) iter.drop(1) else iter }
+
+#################################### Usecase3: DIFFERENT DELIMITERS (pipe, comma, tab)  ##############################################
+
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.hive.HiveContext
+
+val conf = new SparkConf().setAppName("Test").setMaster("yarn-client")
+val sc = new SparkContext(conf)
+val sqlContext = new HiveContext(sc)
+import sqlContext.implicits._
+
+## To read CSV data
+val dataRDD = sc.textFile("/user/saranvisa/scala-sbt-input/product.csv")
+val datawithoutHeaderRDD = dataRDD.mapPartitionsWithIndex((idx,itr)=> if (idx==0) itr.drop(1) else itr)
+
+## RDD to DF.  toDF() is required to Convert RDD to DataFrame
+case class product(storeId:Int,productCategory:String, productID:Int, productPrice:Float)
+val dataFilterDF=datawithoutHeaderRDD.map(rec=>rec.split(",")).map(rec=> product(rec(0).toInt, rec(1).toString(), rec(2).toInt, rec(3).toFloat)).toDF()
+
+dataFilterDF.registerTempTable("tmpProduct")
+
+val resultDF = sqlContext.sql("select productCategory, sum(productPrice) from tmpProduct where storeId = 100 group by productCategory")
+
+## DF to RDD
+val resultRDD  = resultDF.map(rec => (rec(0), rec(1)))
+val resultRDD1 = resultDF.map(rec => (rec(0) + "|"  +  rec(1)))
+val resultRDD2 = resultDF.map(rec => (rec(0) + ","  +  rec(1)))
+val resultRDD3 = resultDF.map(rec => (rec(0) + "\t"  +  rec(1)))
+
+## Save the result to HDFS
+resultRDD.saveAsTextFile("/user/saranvisa/scala-sbt-output/resultrdd")
+resultRDD1.saveAsTextFile("/user/saranvisa/scala-sbt-output/resultrdd_pipe")
+resultRDD2.saveAsTextFile("/user/saranvisa/scala-sbt-output/resultrdd_comma")
+resultRDD3.saveAsTextFile("/user/saranvisa/scala-sbt-output/resultrdd_tab")
+
+
+#################################### Usecase4: Accumulators  ##############################################
+
+//// Accumator from Json & Dataframes
+val empDF = sqlContext.read.json("/user/saranvisa/spark_exam/emp_json.json")
+
+val empRDD  = empDF.map(rec => (rec(0), rec(1), rec(2)))  // Without accumator
+
+// with accumulator
+val accum_DF = sc.accumulator(0,"emp count DataFrame")
+val empRDD = empDF.map(rec => { 
+	accum_DF += 1
+	(rec(0), rec(1), rec(2))
+	})
+accum_DF.value
+
+//// Accumator From textfile & RDD
+val dataRDD_txt = sc.textFile("/user/saranvisa/scala-sbt-input/empid_name.txt")
+
+val empRDD = dataRDD_txt.map(rec=> (rec.split(",")(0).toInt, rec.split(",")(1).toString))  // withtout accumulator
+
+// with accumulator
+val accum_RDD = sc.accumulator(0,"emp count RDD")	
+scala> val empRDD = dataRDD_txt.map(rec=> {
+     | accum_RDD+=1
+     | (rec.split(",")(0).toInt, rec.split(",")(1).toString)
+     | }
+     | )
+	 
+accum_RDD.value
+
+######################################## Usecase5: Complex Hive queries  ######################################################	
+
+Reference: 
+http://arun-teaches-u-tech.blogspot.com/p/problem-6.html
+	
+//1. ## Rank products within department by price and order by department ascending and rank descending
+	
+	var hiveResult = hc.sql("select   d.department_id,   p.product_id,   p.product_name,  p.product_price,  rank() over (partition by d.department_id order by p.product_price) as product_price_rank,   dense_rank() over (partition by d.department_id order by p.product_price) as product_dense_price_rank   from products p   inner join categories c on c.category_id = p.product_category_id  inner join departments d on c.category_department_id = d.department_id  order by d.department_id, product_price_rank desc, product_dense_price_rank ");
+
+//2. ##  Top Customer: find top 10 customers with most unique product purchases. if more than one customer has the same number of product purchases then the customer with the lowest customer_id will take precedence
+
+var topCustomers = hc.sql("select c.customer_id, c.customer_fname, count(distinct(oi.order_item_product_id)) unique_products  from customers c   inner join orders o on o.order_customer_id = c.customer_id  inner join order_items oi on o.order_id = oi.order_item_order_id  group by c.customer_id, c.customer_fname  order by unique_products desc, c.customer_id   limit 10  ");
+
+topCustomers.registerTempTable("top_cust");	
+
+//3. ## Top Product: extract details of products purchased by top 10 customers which are priced at less than 100 USD per unit
+
+var topProducts = hc.sql("select distinct p.* from products p inner join order_items oi on oi.order_item_product_id = p.product_id inner join orders o on o.order_id = oi.order_item_order_id inner join top_cust tc on o.order_customer_id = tc.customer_id where p.product_price < 100");
+
+//4. ## Create a hive table from DataFrame
+
+hc.sql("create table problem6.product_rank_result as select * from product_rank_result_temp where product_price < 100");
+
+hc.sql("create table problem 6.top_products as select distinct p.* from products p inner join order_items oi on oi.order_item_product_id = p.product_id inner join orders o on o.order_id = oi.order_item_order_id inner join top_cust tc on o.order_customer_id = tc.customer_id where p.product_price < 100");
+
+
+
+// ## Practical -1: Problem Scenario1: Get the top 5 priced product by Department
+
+select a.* from (
+select d.department_id, d.department_name, c.category_name, p.product_name, p.product_price,
+rank() over (partition by d.department_id order by p.product_price desc) as product_price_rank, 
+dense_rank()  over (partition by d.department_id order by p.product_price desc) as product_price_dense_rank
+ from sqoop_import.departments d
+ inner join sqoop_import.categories c on d.department_id  = c.category_department_id
+ inner join sqoop_import.products p on p.product_category_id = c.category_id
+  ) a where a.product_price_rank <=5;
+
+
+// ##  Find Min, Max, Top 5 by particular column, etc (usecase1)
+// ##  Get revenue for each day joining orders and order_items (usecase 12)
+  
+  
+#################################### Usecase6: Compress the file      ##############################################  
+1. sqlContext.setConf("spark.sql.parquet.compress.codec","snappy");
+2. Use it with saveAsTextFile: classOf[org.apache.hadoop.io.compress.GzipCodec]
+
+http://arun-teaches-u-tech.blogspot.com/p/cca-175-hadoop-and-spark-developer-exam_5.html
+http://apache-spark-user-list.1001560.n3.nabble.com/Spark-output-compression-on-HDFS-td3647.html
+https://gist.github.com/msukmanowsky/18531dba2bec928424c0
+
+
+// ## Practical-1: Simple Text File
+scala> val empTXT = sc.textFile("/user/saranvisa/scala-sbt-input/empid_name.txt")
+scala> empTXT.saveAsTextFile("/user/saranvisa/spark_exam/txt_del1",classOf[org.apache.hadoop.io.compress.GzipCodec])
+
+
+// ## Practical-2: Avro file using sqlContext
+Login with: spark-shell --packages com.databricks:spark-avro_2.10:2.0.1    
+
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.hive.HiveContext
+
+val conf = new SparkConf().setAppName("Test").setMaster("yarn-client")
+val sc = new SparkContext(conf)
+val sqlContext = new HiveContext(sc)
+import sqlContext.implicits._
+
+import com.databricks.spark.avro._
+
+
+val empDF_avro = sqlContext.read.format("com.databricks.spark.avro").load("/user/saranvisa/spark_exam/emp_avro.avro")
+sqlContext.setConf("spark.sql.parquet.compress.codec","snappy");
+empDF_avro.repartition(1).write.parquet("/user/cloudera/problem5/parquet-snappy-compress");
+
+empDF_avro.map(x=> (x(0), x(1),x(2))).saveAsTextFile("/user/saranvisa/spark_exam/txt_del", classOf[org.apache.hadoop.io.compress.GzipCodec])
+
+
+#################################### Usecase7: Miscellanious commands      ##############################################   
+ 
+val conf = new SparkConf().setAppName("test").setMaster("yarn-client") 
+val conf = new SparkConf().setAppName("test").setMaster("local") 
+	
+########################################################## Usecase8:   ##########################################################
+1. Read emp & dept json and generate a single file with all columns 
+	a. create a hive table and store the data as TEXT, ORC, Avro, Parquet, CSV
+	b. store the result as TEXT, ORC, Avro, Parquet, CSV in HDFS
+	
+
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext	
+import org.apache.spark.sql.hive.HiveContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql._
+import org.apache.spark.sql.types._
+
+object emp_dept {
+	def main(args:Array[String])
+	{
+		val conf = new SparkConf().setAppName("emp_dept").setMaster("yarn-client")
+		val sc = new SparkContext(conf)
+		
+		val sqlContext = new HiveContext(sc)
+		import sqlContext.implicits._
+		
+		//Read JSON
+		//val empDF = sqlContext.sql("select * from json.`/user/saranvisa/spark_exam/emp_json.json`")
+		val empDF = sqlContext.read.json("/user/saranvisa/spark_exam/emp_json.json")
+		val deptDF = sqlContext.read.json("/user/saranvisa/spark_exam/dept_json.json")
+		
+		empDF.registerTempTable("temp_emp")
+		deptDF.registerTempTable("temp_dept")
+
+		val emp_deptDF = sqlContext.sql("select e.empid, e.empname, d.deptid, d.deptname from temp_emp e join temp_dept d on e.deptid = d.deptid")
+		emp_deptDF.registerTempTable("temp_emp_dept")
+		
+		//sqlContext.sql("select * from temp_emp_dept").collect.foreach(println)
+		
+		//Write it into HIVE 
+		sqlContext.sql("create table qa.emp_dept_orc stored as orc as select * from temp_emp_dept")
+		sqlContext.sql("create table qa.emp_dept_txt stored as textfile as select * from temp_emp_dept")
+		sqlContext.sql("create table qa.emp_dept_parquet stored as parquet as select * from temp_emp_dept")
+		sqlContext.sql("create table qa.emp_dept_avro stored as avro as select * from temp_emp_dept")
+		sqlContext.sql("create table qa.emp_dept_tab  row format delimited fields terminated by '\t' as select * from temp_emp_dept")
+		sqlContext.sql("create table qa.emp_dept_csv  row format delimited fields terminated by ',' as select * from temp_emp_dept")
+		
+		//val empRDD_comma  = empDF.map(r => (r(0) + "," + r(1) + "," + r(2)))
+		
+		// comma 
+		val empRDD_comma  = empDF.map(r => empheader(r(0) + "," + r(1) + "," + r(2)))
+		empRDD_comma.saveAsTextFile("hdfs://nn01.itversity.com:8020/user/saranvisa/spark_exam/emp_comma")
+		empRDD_comma.saveAsTextFile("file:///home/saranvisa/spark/emp_comma")
+		// orc
+		empDF.write.format("orc").save("hdfs://nn01.itversity.com:8020/user/saranvisa/spark_exam/emp_orc")
+		// parquet
+		empDF.write.format("parquet").save("hdfs://nn01.itversity.com:8020/user/saranvisa/spark_exam/emp_parquet")
+		
+		// avro -- Use 2.11 or 2.10 based on scala version
+		// Login with: spark-shell --packages com.databricks:spark-avro_2.10:2.0.1    
+		import com.databricks.spark.avro._
+		sqlContext.setConf("spark.sql.avro.compression.codec","snappy")   ## optional 
+		empDF.write.format("com.databricks.spark.avro").save("output dir")
+		empDF.write.format("com.databricks.spark.avro").save("/user/saranvisa/spark_exam/emp_avro.avro")  
+		val df = sqlContext.read.format("com.databricks.spark.avro").load("input dir")
+
+		
+		
+		// CSV -- Use 2.11 or 2.10 based on scala version
+		// Login with: spark-shell --packages com.databricks:spark-csv_2.11:1.5.0	
+		import com.databricks.spark.csv._
+		val df = sqlContext.read.format("com.databricks.spark.csv").load("input dir")
+		empDF.write.format("com.databricks.spark.csv").save("output dir")
+		
+		
+	}
+}
+########################################################## Usecase 9: ##########################################################
+
+1. Read emp & dept json and 
+	a. create a hive table and store the data as TEXT, ORC, Avro, Parquet, CSV
+	b. store the result as TEXT, ORC, Avro, Parquet, CSV in HDFS
+
+########################################################## Usecase 10: spark-submit #####################################################
