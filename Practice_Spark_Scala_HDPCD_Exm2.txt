@@ -1,3 +1,17 @@
+ Quick Ref
+ 1. If you have both spark 1.6 and 2, spark will use 1.6 by default. So use the below command, so that spark will use the version 2
+ 	$ export SPARK_MAJOR_VERSION=2
+ 2. Login to spark
+ 	$ spark-shell --master yarn --conf spark.ui.port=12901
+ 3. Run the SparkPi example from the /bin dir
+ ./bin/spark-submit --class org.apache.spark.examples.SparkPi \
+ --master yarn-cluster \
+ --num-executors 1 \
+ --driver-memory 512m \
+ --executor-memory 512m \
+ --executor-cores 1 examples/jars/spark-examples*.jar 10
+ 4. 
+ ------
  Overall Usecases for
  1. Read & Write Different file formats: Text, CSV, JSON, Parquet, ORC, Avro
  2. Separate Header from Data while reading and writing
