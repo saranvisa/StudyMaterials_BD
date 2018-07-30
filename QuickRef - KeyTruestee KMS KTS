@@ -71,6 +71,21 @@
 	c. It is absoloutely critical that you follow the documented procedures for encrypting and decrypting data, and that you regularly back up the encryption keys and configuration files
 
 8. Install KMS
+
+---
+Frequently used commands
+1.  To list all the available key (no need to be a HDFS/super user)
+$ hadoop key list
+
+2. To list all the key by zone/folders (Need to be a HDFS/super user to perform this)
+$ dzdo su # To login as root
+$ cd /var/run/clouder-scm-agent/process/
+$ ls -ltr # to find the folder for HDFS Datanode which contains hdfs.keytab
+$ klist -kt hdfs.keytab   # This will list all full path for hdfs.keytab with REALM
+$ kinit -kt hdfs.keytab <copy past from result from above command>
+$ hdfs crypto -listZones
+
+
 	
 
 
