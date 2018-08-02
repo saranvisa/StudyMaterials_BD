@@ -1,4 +1,21 @@
-======================= GITHUB=========
+======================= Reference for cloudera cluster 'auto' setup using python ============
+https://github.com/cloudera/cm_api/tree/master/python/examples/auto-deploy
+1. Make sure to meet the pre-request
+2. Read the README.md to understand how to execute the script
+3. Test to validate the installation 
+
+======================= Cloudera API ==========================================================
+Usecase: 
+1. Automated deployment of new clusters, using a combination of Puppet and the Cloudera Manager API. Puppet does the OS-level provisioning and installs the software. The Cloudera Manager API sets up the Hadoop services and configures the cluster. Use the web link below
+The API also provides access to management functions:
+2.	Obtaining logs and monitoring the system
+3.	Starting and stopping services
+4.	Polling cluster events
+5.	Creating a disaster recovery replication schedule
+
+https://www.cloudera.com/documentation/enterprise/5-9-x/topics/cm_intro_automation_api.html#concept_hlz_m5x_fz
+
+======================= Cloudera cluster 'manual' setup =========================================
 
 -------- Using Ubuntu in AWS
 http://gethue.com/hadoop-tutorial-how-to-create-a-real-hadoop-cluster-in-10-minutes/
@@ -234,7 +251,52 @@ sudo ./cloudera-manager-installer.bin
 
 Impala 1.4.0 (or higher) running with strong authentication. With Impala, either Kerberos or LDAP can be configured to achieve strong authentication
 
------------
+################## Test to validate the installation ###############
+
+https://github.com/cloudera/cm_api/tree/master/python/examples/auto-deploy#tests-to-validate-the-installation
+
+#Run these on one of the datanodes in the cluster
+
+#Create hive table
+hive shell
+hive> CREATE TABLE justin(id INT, name STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY ' ' STORED AS TEXTFILE;
+hive> exit;
+
+#Create HDFS file
+echo "1 justin" > /tmp/test
+sudo -u hdfs hadoop fs -put /tmp/test /user/hive/warehouse/justin/
+
+#Query hive table
+hive shell
+hive> select * from justin where id=1;
+hive> exit;
+
+#Query same table but in impala
+impala-shell
+impala> invalidate metadata;
+impala> select * from justin;
+impala> exit;
+
+#Run mapreduce job
+hadoop jar /opt/cloudera/parcels/CDH/lib/hadoop-0.20-mapreduce/hadoop-examples.jar pi 10 10
+
+#Test hbase
+hbase shell
+hbase> create 'test', 'cf'
+hbase> list 'test'
+hbase> put 'test', 'row1', 'cf:a', 'value1'
+hbase> scan 'test'
+hbase> exit
+
+#Test spark - replace $NAMENODE with the correct hostname that's running the NN
+echo "this is the end. the only end. my friend." > /tmp/sparkin
+hadoop fs -put /tmp/sparkin /tmp/
+spark-shell
+scala> val file = sc.textFile("hdfs://$NAMENODE:8020/tmp/sparkin")
+scala> val counts = file.flatMap(line => line.split(" ")).map(word => (word, 1)).reduceByKey(_ + _)
+scala> counts.saveAsTextFile("hdfs://$NAMENODE:8020/tmp/sparkout")
+scala> exit
+hadoop fs -cat /tmp/sparkout
 
 #########################################################
 #### KERBEROS INSTALLATION & CONFIGURUATION ####
@@ -870,3 +932,12 @@ Add the following value
   <value>hive/_HOST@YOUR-REALM.COM</value>
   <description>The service principal for the metastore thrift server. The special string _HOST will be replaced automatically with the correct host name.</description>
 </property>
+
+############################ Resource Management - Dynamic Resource pooling ####################
+1. For resource (vcore, memory) to a particular job queue
+2. You can create multiple job queues (high and low priority, etc).  high-priority job queue is for regular jobs triggered using batchID, low-priority job queue is for jobs triggered using individual user id – it will be considered as adhoc query. 
+3. You can also have different weightage for high and low priority job queue during day time, night time, weekends, default. 
+4. Use ‘default queue mapping’ , so that it will assign jobs triggered by batchID directly to high-prioity queue and individual user queries directly assigned to low-priority queue ‘irrespective’ of specifying the job queue
+
+#################################################################################################
+
