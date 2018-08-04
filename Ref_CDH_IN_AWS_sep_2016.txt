@@ -118,6 +118,10 @@ https://community.cloudera.com/t5/Interactive-Short-cycle-SQL/Impala-scratch-fil
 
 8. How to handle Memory overcommit issue between Yarn & Impala? Pending
 
+------------
+First time login
+ssh ec2-user@ec2-34-123-123-123.compute-1.amazonaws.com
+
 ------------ set password for root
 sudo passwd root;
 
@@ -203,11 +207,9 @@ vi /etc/sysconfig/network
 HOSTNAME=<identify the public host and assign>
 
 vi /etc/hosts
-10.0.0.203 ec2-34-194-113-157.compute-1.amazonaws.com
-10.0.0.62 ec2-34-194-173-26.compute-1.amazonaws.com
-10.0.0.184 ec2-34-193-195-87.compute-1.amazonaws.com
-10.0.0.178 ec2-34-193-211-19.compute-1.amazonaws.com
-10.0.0.173 ec2-34-193-203-57.compute-1.amazonaws.com
+10.0.0.203 ec2-34-123-123-123.compute-1.amazonaws.com
+10.0.0.62 ec2-34-124-124-124.compute-1.amazonaws.com
+
 ------------ Enable password authentication
 vi /etc/ssh/sshd_config
 PasswordAuthentication yes
@@ -218,10 +220,9 @@ service sshd restart
 init 6
 
 ------------Verifiy ssh after enable password authentication
-ssh kumar@ec2-34-194-113-157.compute-1.amazonaws.com
-ssh kumar@ec2-34-194-173-26.compute-1.amazonaws.com
-ssh kumar@ec2-34-194-173-26.compute-1.amazonaws.com
-ssh kumar@ec2-34-193-203-57.compute-1.amazonaws.com
+ssh kumar@ec2-34-123-123-123.compute-1.amazonaws.com
+ssh kumar@ec2-34-124-124-124.compute-1.amazonaws.com
+
 
 --------- Enable password less login
 # Master node
@@ -232,7 +233,7 @@ pwd # make sure it is /home/username
 mkdir -p .ssh
 
 #master node
-cat ~/.ssh/id_rsa.pub | ssh kumar@ec2-34-193-203-57.compute-1.amazonaws.com "cat >> ~/.ssh/authorized_keys"
+cat ~/.ssh/id_rsa.pub | ssh kumar@ec2-34-123-123-123.compute-1.amazonaws.com "cat >> ~/.ssh/authorized_keys"
 
 # Slave node
 chmod 600 authorized_keys
@@ -355,8 +356,8 @@ vi /etc/krb5.conf
 # Make sure kdc and admin_server assigned to Public IP as mentioned below
 [realms]
  AWS.COM = {
-  kdc = ec2-34-192-193-57.compute-1.amazonaws.com:88
-  admin_server = ec2-34-192-193-57.compute-1.amazonaws.com:749
+  kdc = ec2-34-123-123-123.compute-1.amazonaws.com:88
+  admin_server = ec2-124-124-124.compute-1.amazonaws.com:749
  }
 
 [domain_realm]
@@ -391,12 +392,12 @@ Replace EXAMPLE.COM with AWS.COM
 */admin@AWS.COM *
 
 ----------
-[root@ec2-34-194-173-26 krb5kdc]# chown cloudera-scm:cloudera-scm kadm5.acl
-[root@ec2-34-194-173-26 krb5kdc]# chown cloudera-scm:cloudera-scm principal.kadm5
-[root@ec2-34-194-173-26 krb5kdc]# chown cloudera-scm:cloudera-scm principal.kadm5.lock
-[root@ec2-34-194-173-26 krb5kdc]# chown cloudera-scm:cloudera-scm principal.ok
-[root@ec2-34-194-173-26 krb5kdc]# chown cloudera-scm:cloudera-scm principal
-[root@ec2-34-194-173-26 krb5kdc]# chown cloudera-scm:cloudera-scm kdc.conf
+[root@ec2-34-123-123-123 krb5kdc]# chown cloudera-scm:cloudera-scm kadm5.acl
+[root@ec2-34-123-123-123 krb5kdc]# chown cloudera-scm:cloudera-scm principal.kadm5
+[root@ec2-34-123-123-123 krb5kdc]# chown cloudera-scm:cloudera-scm principal.kadm5.lock
+[root@ec2-34-123-123-123 krb5kdc]# chown cloudera-scm:cloudera-scm principal.ok
+[root@ec2-34-123-123-123 krb5kdc]# chown cloudera-scm:cloudera-scm principal
+[root@ec2-34-123-123-123 krb5kdc]# chown cloudera-scm:cloudera-scm kdc.conf
 
 #########################################################
 #### KERBEROS DB CREATION ####
@@ -420,12 +421,12 @@ http://www.cloudera.com/documentation/enterprise/latest/topics/cm_sg_s3_cm_princ
 >kadmin.local
 addprinc -randkey -pw hadoop1 cloudera-scm/admin@AWS.COM
 addprinc -randkey -pw hadoop1 root/admin@AWS.COM
-addprinc -randkey -pw hadoop1 hdfs/ec2-34-194-113-157.compute-1.amazonaws.com@AWS.COM
-addprinc -randkey -pw hadoop1 mapred/ec2-34-194-113-157.compute-1.amazonaws.com@AWS.COM
-addprinc -randkey -pw hadoop1 yarn/ec2-34-194-113-157.compute-1.amazonaws.com@AWS.COM
-addprinc -randkey -pw hadoop1 hive/ec2-34-194-113-157.compute-1.amazonaws.com@AWS.COM
-addprinc -randkey -pw hadoop1 HTTP/ec2-34-194-113-157.compute-1.amazonaws.com@AWS.COM
-addprinc -randkey -pw hadoop1 solr/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM    ## Check the Public IP before add the principal
+addprinc -randkey -pw hadoop1 hdfs/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
+addprinc -randkey -pw hadoop1 mapred/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
+addprinc -randkey -pw hadoop1 yarn/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
+addprinc -randkey -pw hadoop1 hive/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
+addprinc -randkey -pw hadoop1 HTTP/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
+addprinc -randkey -pw hadoop1 solr/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM    ## Check the Public IP before add the principal
 addprinc -pw hadoop1 hdfs@AWS.COM
 addprinc -pw hadoop1 hive@AWS.COM
 addprinc -pw hadoop1 root@AWS.COM
@@ -434,34 +435,34 @@ addprinc -pw hadoop1 kumar1@AWS.COM
 #########################################################
 
 # Add only child hosts
-addprinc -pw hadoop1 host/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM
+addprinc -pw hadoop1 host/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
  
 ######################################################### 
 #### ON HOLD #### Go to next step ##
 
 ## ON HOLD # Not needed # Add HTTP, httpfs, hdfs
-# addprinc -randkey -pw hadoop1 HTTP/ec2-34-193-195-87.compute-1.amazonaws.com@AWS.COM
-# addprinc -randkey -pw hadoop1 httpfs/ec2-34-193-195-87.compute-1.amazonaws.com@AWS.COM
-# addprinc -randkey -pw hadoop1 hdfs/ec2-34-193-195-87.compute-1.amazonaws.com@AWS.COM
-# addprinc -randkey -pw hadoop1 mapred/ec2-34-193-195-87.compute-1.amazonaws.com@AWS.COM
-# addprinc -randkey -pw hadoop1 yarn/ec2-34-193-195-87.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 HTTP/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 httpfs/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 hdfs/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 mapred/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 yarn/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
 
 ## ON HOLD # Just for reference
 # To Add all the services **** DO NOT ADD THE BELOW SERVICES TO ENABLE KERBEROS USING wizard *** OTHERWISE IT WILL THROW BELOW ERROR
-# add_principal: Principal or policy already exists while creating "oozie/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM"
+# add_principal: Principal or policy already exists while creating "oozie/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM"
 # For Hadoop, the principals should be of the format username/fully.qualified.domain.name@YOUR-REALM.COM
 # username of an existing Unix account, such as hdfs or mapred
 # Note: Not all of them are valid username from "cat /etc/passwd | grep login". But it will help to identify the available username
 # Syntax: addprinc -randkey hdfs/fully.qualified.domain.name@YOUR-REALM.COM
-## To delete the existing principal: delprinc HTTP/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM
+## To delete the existing principal: delprinc HTTP/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
 
 ## ON HOLD # Just for reference
-# addprinc -randkey -pw hadoop1 hive/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM
-# addprinc -randkey -pw hadoop1 hue/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM
-# addprinc -randkey -pw hadoop1 mapred/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM
-# addprinc -randkey -pw hadoop1 yarn/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM
-# addprinc -randkey -pw hadoop1 zookeeper/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM
-# addprinc -randkey -pw hadoop1 oozie/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 hive/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 hue/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 mapred/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 yarn/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 zookeeper/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 oozie/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
 *** Pending *** (sqoop is missing in K12)
 # sentry:x:488:487:Sentry:/var/lib/sentry:/sbin/nologin
 # spark:x:486:485:Spark:/var/lib/spark:/sbin/nologin
@@ -481,19 +482,19 @@ kadmin.local:
 
 # Create the hdfs.keytab files:
 kadmin.local: 
-  xst -norandkey -k /home/kumar/hdfs.keytab hdfs/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM HTTP/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM
+  xst -norandkey -k /home/kumar/hdfs.keytab hdfs/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM HTTP/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
 
 # Create the mapred.keytab files:
 kadmin.local: 
-  xst -norandkey -k /home/kumar/mapred.keytab mapred/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM HTTP/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM
+  xst -norandkey -k /home/kumar/mapred.keytab mapred/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM HTTP/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
 
 # Create the yarn.keytab files:
 kadmin.local: 
-  xst -norandkey -k /home/kumar/yarn.keytab yarn/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM HTTP/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM
+  xst -norandkey -k /home/kumar/yarn.keytab yarn/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM HTTP/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
 
 # Create the hive.keytab files:
 kadmin.local: 
-  xst -norandkey -k /home/kumar/hive.keytab yarn/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM HTTP/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM
+  xst -norandkey -k /home/kumar/hive.keytab yarn/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM HTTP/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
 
 #########################################################
 #### DISPLAY THE KEYTAB #### 
@@ -607,7 +608,7 @@ sudo chmod 400 /etc/hadoop/conf/*.keytab
 #### SETUP REALM in CM ####
 
 CM -> Administration -> Setting -> Kerberos -> Kerberos Security REALM = AWS.COM
-CM -> Administration -> Setting -> Kerberos -> KDC SERVER HOST = ec2-34-194-113-157.compute-1.amazonaws.com
+CM -> Administration -> Setting -> Kerberos -> KDC SERVER HOST = ec2-34-123-123-123.compute-1.amazonaws.com
 CM -> Administration -> Setting -> Kerberos -> Encryption type = aes256-cts
 
 #########################################################
@@ -642,7 +643,7 @@ To enable your access to the superuser account now that Kerberos is enabled, you
 # Oozie and Hue require that the realm support renewable tickets
 # Below is for only HUE
 kadmin.local: modprinc -maxrenewlife 90day krbtgt/AWS.COM
-kadmin.local: modprinc -maxrenewlife 90day +allow_renewable hue/ec2-34-194-113-157.compute-1.amazonaws.com@AWS.COM
+kadmin.local: modprinc -maxrenewlife 90day +allow_renewable hue/ec2-34-123-123-123.compute-1.amazonaws.com@AWS.COM
 
 
 #########################################################
@@ -873,7 +874,7 @@ insert into prod.test1 values (10000, 'Bob', 2016, 11);
 
 ---------------
 
-Hive Impersonation is enabled for Hive Server2 role 'HiveServer2 (ec2-34-193-8-64)
+Hive Impersonation is enabled for Hive Server2 role 'HiveServer2 (ec2-34-123-123-123)
 
 HiveServer2 Enable Impersonation
 hive.server2.enable.impersonation, hive.server2.enable.doAs
