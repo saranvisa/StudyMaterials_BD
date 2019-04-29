@@ -1,0 +1,287 @@
+﻿1. What are we using for publish/produce data to a topic. 
+	a. 
+	Logstash/Flume/Kafka/anything else ? 
+2. Spark streaming is a consumer right? 
+3. 
+
+------
+1. Reference (quick start) : https://kafka.apache.org/quickstart
+https://kafka.apache.org/documentation/
+https://github.com/Landoop/stream-reactor			## Kafka Connector to all other services like Elasticsearch, hive, mongo, cassandra, etc
+https://gist.github.com/dgadiraju/c4ed3195e563779e97a1658598269652
+Reference: http://www.godatafy.com/category/tech-blog/kafka-tech-blog/
+Reference: Very useful Youtube Channel: "bigdata simplified
+
+2. *** Very clear basic info ***
+	https://www.youtube.com/watch?v=udnX21__SuU
+	It will cover following things.
+		1. Producer
+		2. Consumer
+		3. Broker
+		4. Cluster
+		5. Topic
+		6. Partitions
+		7. Offset
+		8. Consumer groups
+
+2. ITVersity Complete reference including Logstash (ELK)
+	https://www.youtube.com/watch?v=NhDM9dFnTA8								## Only intro to kafka and ELK 
+	https://www.youtube.com/playlist?list=PLf0swTFhTI8rM5AdWXObgQ-aN5gYyOfKC				## Complete playlist 
+	https://www.youtube.com/watch?v=EZb3ueApt7A&list=PLf0swTFhTI8rM5AdWXObgQ-aN5gYyOfKC&index=3		## Overview of streaming technology
+	
+3. Limitations of Flume and Kafka. Also to understand why do we need both Flume and Kafka
+	https://www.youtube.com/watch?v=V3smJMQaArI&list=PLf0swTFhTI8pZ6fj9OmHKuESF0yUL-wkb&index=14
+	
+4. Kafka security
+		https://kafka.apache.org/documentation/#security
+		
+5. Kafka - Producer example 
+	https://www.tutorialspoint.com/apache_kafka/apache_kafka_simple_producer_example.htm
+	
+##########################################################################
+Frequently Used Commands/Tips
+##########################################################################
+
+** Supports Java and Scala programs
+** "Source"(WebServer/DB)-> "3rd party tool"(Logstash/Flume/Kafka connect)-> "Kafka topic" -> "3rd party tool" -> "target"(NoSQL DB,Hadoop,etc)
+** For 3rd party tool - In addtion to Logstash, Flume, Kafka Connect, We can also use Custom Apps (using produer API)
+** Logstash is a dynamic data collection pipeline with an extensible plugin eco system and strong elastic search synergy
+
+Tips:
+1. ZooKeeper defalt port: 2181
+2. Kafka default port : 9092 
+3. Use -daemoan option to execute kafka in background	
+4. API:
+	a. We can use Kafka publisher api and directly publish the messages to topic 
+5. Important config files: 
+	a. config/zookeeper.properties
+	b. config/server.properties
+		* The broker.id property is the unique and permanent name of each node in the cluster
+		* log.dirs=/tmp/kafka-logs-0 ## This folder contains a log file this is the messaging queue 
+6. Publisher/Producer: are processes that publish data (push messages) to the message queue
+	a. It can be a tipical Scala or Java based program which uses publisher API 
+	b. Kafka Connect 
+	c. Logstash
+	d. Flume 
+7. Subscriber/Consumer: Are processes that read from the message queue 		
+	a. It can be a Scala or Java based program which uses Consumer API 
+	b. Spark streaming 
+	c. Kafka Connect 
+	d. etc 
+	
+----	
+1. ITVersity: Kafka bin path: /usr/hdp/2.6.5.0-292/kafka/bin
+	So in ITVersity, update the .profile (or) .bash_profile with:  export PATH=$PATH:/usr/hdp/2.6.5.0-292/kafka/bin
+	
+2. Deprecated property as per Apache flume : 
+	a. broker-list: This can be a partial list of brokers, but we recommend at least two for HA
+	b. Use kafka.topic instead of topic	
+	c. Use kafka.consumer.group.id instead of groupId
+	d. Use kafka.consumer.auto.offset.reset instead of readSmallestOffset
+	
+3. What is Kafka?
+	It is an open source stream-processing software plantform developed by the Apache Souftware foundation, written in Scala and Java. It was initially developed as an internal product at LinkedIn and was Open-sourced and adopted by apache foundation. 
+	
+3.1. Features of Kafka?
+	a. Highly scalable (achieved by Partition) 
+	b. Fault Tolerant	(achieved by replication factor)
+	c. Low Latency 
+	d. High Throughput 
+
+4. What is Kafka broker?
+	A kafka cluster consists of one or more servers (Kafka Brokers) which are running kafka. Producers are processes that publish data (push mesage) into kafka topic within the broker. A consumer of topics pulls messages of a kafka topic 
+	
+4.1. What is Kafka Topic?
+	Topic is a intermediate file structure managed by broker, where we can stream data from the producer to consumer. 
+	
+5. Zookeeper in kafka
+		Zookeeper also plays a vital role for serving many other purposes, such as leader detection, configuration management, synchronization, detecting when a new node joins or leaves the cluster, etc. Future Kafka releases are planning to remove the zookeeper dependency but as of now it is an integral part of it
+		
+6. Kafka Parition
+	
+7. Kafka offset
+		A Kafka topic receives messages across a distributed set of partitions where they are stored. Each partition maintains the messages it has received in a sequential order where they are identified by an offset, also known as a position
+		
+8. Commit in Kafka
+			In Kafka releases through 0.8.1.1, consumers commit their offsets to ZooKeeper. ... Fortunately, Kafka now provides an ideal mechanism for storing consumer offsets. Consumers can commit their offsets in Kafka by writing them to a durable (replicated) and highly available topic.
+	
+9. Consumer Group?
+	Consumer Group. Consumers can join a group by using the same group.id. The maximum parallelism of a group is that the number of consumers in the group ← no of partitions. Kafka assigns the partitions of a topic to the consumer in a group, so that each partition is consumed by exactly one consumer in the group.
+	
+10. Kafka APIs (Supports Java and Scala programs)
+		a. Producer API
+		b. Consumer API
+		c. Streams API
+		d. Connector API ** Internaly connector API will use Producer and Consumer APIs. ** 
+
+11. Why Logstash?
+	a. Seamless integration with ELK (Elasticsearch and Kibana) for easy metrics and visuallizaiton
+	b. Extensible: Logstash works on a concept of plugins, it can be extended via plugins to parse various log formats and we can develop applications very easy and reliable way 
+	c. Interoperable: Logstash works seamlessly  with other tools such as Kafka, HDFS, S3, Nagios, Ganglia , etc 
+	d. Open source: Logstash is completely free to use and is an open source tool 
+	
+12.  How Logstash works?
+
+	(Web Server) Source -> (Logstash/Flume) 3rd party tool -> Kafka topic -> 3rd party tool -> target (NoSQL DB, Hadoop, etc)
+
+	Logstash is a "server-side" open source framework to ingest data, process it and send it to applications or "stashes" as they call it for further processing 
+
+	To put it simply, Logstash is used to collect and transform data from multiple sources and pipelines it into different destinations with minimum settings with the use of the multiple plugins and extension
+
+13. Sample Logstash use case
+	a. Read data from log file
+	b. Parse each message separately
+	c. Get country code based on ip address
+	d. Convert message into JSON
+	e. Push each message into Kafka topic in real time 
+
+14. Pub-Sub (Publish-Subscribe) Messaging - Topic:
+	Pub/Sub messaging is a form of asynchronous service-to-service communication used in serverless and microservices architectures. In a pub/sub model, any message published to a topic is immediately receied by all of the subscirbers to the topic. 
+
+##########################################################################
+Kafka - Download and setup
+##########################################################################
+
+### Pre-request: Zookeeper , Kafka (any latest version) and JDK 1.7
+https://www.youtube.com/watch?v=NhDM9dFnTA8&list=PLf0swTFhTI8rM5AdWXObgQ-aN5gYyOfKC 	## ITVersity: Streaming Pipelines - Kafka Core Concepts and Overview Of Logstash
+
+
+		
+		
+## Single node configuration 
+1. download & untar
+	$ wget https://www-eu.apache.org/dist/kafka/2.1.0/kafka_2.11-2.1.0.tgz
+	$ tar -xzf kafka_2.11-2.1.0.tgz
+2. start zookeeper properties available in the kafka config folder
+	
+	$ cd /kafka/kafka_2.11-2.1.0
+	
+	## Update the config file as needed config/zookeeper.properties
+	## Update the config file as needed config/server.properties
+		a. config/server.properties:
+			broker.id=0
+			listeners=PLAINTEXT://<ip-address>:9092
+			log.dirs=/tmp/kafka-logs-0
+			zookeeper.connect = <ip-address>:2181,<ip-address2>:2181
+			log.roll.hours=168
+			log.retention.hours=168
+		
+		b. config/server-1.properties:
+			broker.id=1
+			listeners=PLAINTEXT://<ip-address>:9093
+			log.dirs=/tmp/kafka-logs-1
+			zookeeper.connect = <ip-address>:2181,<ip-address2>:2181
+			log.roll.hours=168
+			log.retention.hours=168
+			
+	$ sh bin/zookeeper-server-start.sh -daemon config/zookeeper.properties		## Using -daemoan to start the service in background
+	
+	## Validation for zookeeper
+	$ telnet <ip-address> 2181		## Use localhost in case of single node 
+	$ jps
+		<processid> QuorumPeerMain
+	$ sh bin/kafka-server-start.sh -daemoan config/server.properties			## Using -daemoan to start the service in background
+	
+	## Validation for kafka server 
+	$ telnet <ipaddress> 9092 		## Use localhost in case of single node 
+	
+	$ jps
+		<processid> QuorumPeerMain
+		<processid> Kafka
+		
+3. Create & list a topic:
+	$ bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
+	$ bin/kafka-topics.sh --list --zookeeper localhost:2181
+	$ bin/kafka-topics.sh --list --zookeeper localhost:2181 --topic test 		## To list a particular topic 	
+
+4. Producer data to the above topic & Consume it
+	## Syntax: kafka-console-producer.sh will use "-broker-list" 
+	## Syntax: kafka-console-consumer.sh will use "--bootstrap-server"		
+	## Both broker-list and bootstrap-server are same but don't know why they have different argument name for producer and consumer
+	$ bin/kafka-console-producer.sh  --broker-list localhost:9092 --topic test 
+	$ bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test --from-beginning
+	
+5. Delete the topic
+	$ bin/kafka-topics.sh --delete --zookeeper localhost:2181 --topic test
+	## The above command is used to set Topic is marked for deletion  
+	delete.topic.enable true
+	
+6. To pump the output of tail command to the kafka topic test
+	$ tail -F access.log | kafka-console-producer.sh  --broker-list localhost:9092 --topic test 	
+	
+	
+## Note: About bootstrap-server and port 9092, dataDir, logDir, etc 
+	## Option 1
+	$ cd /kafka/kafka_2.11-2.1.0
+	$ cat server.properties | grep 9092
+		#     listeners = PLAINTEXT://your.host.name:9092
+		#listeners=PLAINTEXT://:9092
+		#advertised.listeners=PLAINTEXT://your.host.name:9092
+	
+	## Option 2
+	a. Go to Cloudera Manager or Ambari and open the Kafka broker, it will show the listers and zookeeper.connect which is bootstrap-server 
+	b. Get the port number from listener. It is 6667 in ITVersity
+	c. 
+##########################################################################
+Kafka - Execution using shell 
+##########################################################################
+
+# Below kafka shells are just for testing. But in real-time schenario, we will never use shells
+# All the below syntax will vary depends upon the kafka version. The below syntax is for kafka 0.8
+# Partition is for scalability and replication factor is for high availability
+# Specify ZK host with port 2181
+kafka-topics.sh --create \
+  --zookeeper nn01.itversity.com:2181,nn02.itversity.com:2181,rm01.itversity.com:2181 \
+  --replication-factor 1 \
+  --partitions 1 \
+  --topic kafka-saranvisa-topic1
+
+kafka-topics.sh --list \
+  --zookeeper nn01.itversity.com:2181,nn02.itversity.com:2181,rm01.itversity.com:2181 \
+  --topic kafka-saranvisa-topic1
+
+# Command to produce messages, start typing after running this kakfa-console-producer command
+# The messages will be stored in topic kafkadg on the host where brokers are running
+# Specify all the Kafka broker host with port 6667 , 9092
+kafka-console-producer.sh \
+  --broker-list nn01.itversity.com:6667,nn02.itversity.com:6667,rm01.itversity.com:6667 \
+  --topic kafka-saranvisa-topic1
+
+
+# Open another shell and then run kafka-console-consumer command to see streaming messages
+# Make sure to setup KAFKA_HOME, PATH in new shell
+# from-beginning means from offset 0, from-now means only current value
+kafka-console-consumer.sh \
+  --bootstrap-server nn01.itversity.com:6667,nn02.itversity.com:6667,rm01.itversity.com:6667 \
+  --zookeeper nn01.itversity.com:2181,nn02.itversity.com:2181,rm01.itversity.com:2181 \
+  --topic kafka-saranvisa-topic1 \
+  --from-beginning
+
+
+## To describe the topic
+kafka-topics.sh --describe \
+--zookeeper nn01.itversity.com:2181,nn02.itversity.com:2181,rm01.itversity.com:2181 \
+--topic kafka-saranvisa-topic1
+
+##################################################################################
+Kafka-ansible-roles-playbook 	-- Pending 
+##################################################################################
+
+https://github.com/dgadiraju/kafka-ansible-roles-playbook
+
+##################################################################################
+Kafka - Streaming 				-- Pending 
+##################################################################################
+https://www.youtube.com/watch?v=NhDM9dFnTA8&feature=push-lsb&attr_tag=ET_GAXm0_u_nZJHP%3A6
+
+###################################################################################
+Streaming Pipelines - Kafka Core Concepts and Overview Of Logstash *** Elasticsearch
+##################################################################################
+
+ITVersity(Logstash) : https://www.youtube.com/watch?v=NhDM9dFnTA8
+
+
+
+
+
+
