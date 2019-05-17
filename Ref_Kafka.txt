@@ -1,8 +1,10 @@
-﻿1. What are we using for publish/produce data to a topic. 
-	a. 
-	Logstash/Flume/Kafka/anything else ? 
+1. What are we using for publish/produce data to a topic. 
+		a. Logstash/Flume/Kafka connect/anything else ? 
 2. Spark streaming is a consumer right? 
-3. 
+3. To run the program in local (using IntelliJ), do I need to install zookeeper, kafka client and "all other tools"  in my local machine (in addition to cluster)? Yes
+4. If so, how to install zookeeper, kafka client and 'all other tools' in windows local? 
+5. 
+
 
 ------
 1. Reference (quick start) : https://kafka.apache.org/quickstart
@@ -12,7 +14,12 @@ https://gist.github.com/dgadiraju/c4ed3195e563779e97a1658598269652
 Reference: http://www.godatafy.com/category/tech-blog/kafka-tech-blog/
 Reference: Very useful Youtube Channel: "bigdata simplified
 
-2. *** Very clear basic info ***
+2. Learning Journal: 
+	Github		: https://github.com/LearningJournal/ApacheKafkaTutorials/tree/master/ProducerExamples
+	Website		: https://www.learningjournal.guru/courses/kafka/kafka-foundation-training/
+	Youtube		: https://www.youtube.com/watch?v=twvdT6A1eeE&list=PLkz1SCf5iB4enAR00Z46JwY9GGkaS2NON&index=10
+	
+	*** Very clear basic info ***
 	https://www.youtube.com/watch?v=udnX21__SuU
 	It will cover following things.
 		1. Producer
@@ -28,6 +35,7 @@ Reference: Very useful Youtube Channel: "bigdata simplified
 	https://www.youtube.com/watch?v=NhDM9dFnTA8								## Only intro to kafka and ELK 
 	https://www.youtube.com/playlist?list=PLf0swTFhTI8rM5AdWXObgQ-aN5gYyOfKC				## Complete playlist 
 	https://www.youtube.com/watch?v=EZb3ueApt7A&list=PLf0swTFhTI8rM5AdWXObgQ-aN5gYyOfKC&index=3		## Overview of streaming technology
+	https://www.youtube.com/watch?v=NhDM9dFnTA8&list=PLf0swTFhTI8rM5AdWXObgQ-aN5gYyOfKC 			## Overview of streaming technology
 	
 3. Limitations of Flume and Kafka. Also to understand why do we need both Flume and Kafka
 	https://www.youtube.com/watch?v=V3smJMQaArI&list=PLf0swTFhTI8pZ6fj9OmHKuESF0yUL-wkb&index=14
@@ -37,6 +45,10 @@ Reference: Very useful Youtube Channel: "bigdata simplified
 		
 5. Kafka - Producer example 
 	https://www.tutorialspoint.com/apache_kafka/apache_kafka_simple_producer_example.htm
+	
+6. JavaDoc:
+		https://kafka.apache.org/10/javadoc/index.html?org/apache/kafka/clients/producer/KafkaProducer.html
+		https://kafka.apache.org/10/javadoc/index.html?org/apache/kafka/clients/producer/KafkaProducer.html
 	
 ##########################################################################
 Frequently Used Commands/Tips
@@ -52,7 +64,13 @@ Tips:
 2. Kafka default port : 9092 
 3. Use -daemoan option to execute kafka in background	
 4. API:
-	a. We can use Kafka publisher api and directly publish the messages to topic 
+	a. There are 5 core APIs
+		1. Producer API
+		2. Consumer API
+		3. Kafka Connect API
+		4. Streaming API
+		5. AdminClient API 
+	b. We can use Kafka publisher api and directly publish the messages to topic 
 5. Important config files: 
 	a. config/zookeeper.properties
 	b. config/server.properties
@@ -68,6 +86,69 @@ Tips:
 	b. Spark streaming 
 	c. Kafka Connect 
 	d. etc 
+8. Pre-request:
+	a. Check the Version compatibility of Kafka, Spark Streaming, target (Hbase, bigdata, etc) 
+	b. Go to Kafka library path in hadoop -> (Ex: In horton works) -> "cd /usr/hdp/2.6.5.0-292/kafka/libs" -> kafka jar will be here
+	c. kafka_2.11-1.0.0.2.6.5.0-292-source.jar.asc  ## Below are compatible version# 
+		a. 2.11 is for scala
+		b. 1.0.0 is for Kafka 
+		c. 2.6.5.0 is for Hadooop 
+		d. Note: Scala 2.11 is not compatiable with JDK 1.9, so use JDK 1.8
+		e. For SBT, use 0.13.17 
+		
+9. We need to install Kafka server and kafaka clients as needed. Below is an example for both:
+		a. kafka_2.11-1.0.0.2.6.5.0-292-source.jar.asc		## kafka-Server 
+		b. kafka-clients-1.0.0.2.6.5.0-292.jar 				## kafaka-clients - is compatible with multiple scala version, so scala version is not mentioned
+
+10. For SBT or Maven, search for the repositories and library dependencies in the google. 
+	a. Ex: Search for Maven repositories for cloudera
+	b. Ex: Search for Maven repositories for Kafka 
+	
+11. Serialization: The activity of converting java objects into "array of bytes" is called serialization. Because Kafka doesn't have any meaning for the data, it is just an array 	  of 	bytes for kafka. 
+
+	https://www.youtube.com/watch?v=twvdT6A1eeE&list=PLkz1SCf5iB4enAR00Z46JwY9GGkaS2NON&index=10
+	Ex: 
+	
+	String key = "Key1";
+	String value = "Value-1";
+	String topicName = "SimpleProducerTopic";
+	
+	Properties props = new Properties();
+	props.put("bootstrap.servers", "localhost:9092,localhost:9093");
+	## Below we are trying to send String Key and String Value but Kafka understands only "array of bytes". So using the below class to convert the string to array of bytes 
+	## This is called serialization
+	## Kafka also provides other serializers called IntSerializer and DoubleSerializer
+	props.put("key.serializer","org.apache.kafka.common.serialization.StringSerializer");         
+	props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+
+	## Below the <String, String> -- The first one is key and second one is value , so we need to change it based on the data type of key and value 
+	Producer<String, String> producer = new KafkaProducer<>(props);           				### Step 1: To create producer object, should use the above properties (props)
+	ProducerRecord<String, String> record = new ProducerRecord<>(topicName,key,value);		### Step 2: producer Record object, should have topic, key and value 
+	producer.send(record);                													### Step 3: Send the record 
+	producer.close();
+	System.out.println("SimpleProducer Completed.");
+	
+12. 'Producer record' constructors in java: 	
+	a. topic:
+	b. partition (optional):
+	c. timestamp (optional): if you send the timestamp it will take it otherwise, it will consider the timestamp when it reaches the broker by default
+	d. Key (optional): Key is used to identify the partition. If key is not mentioned, then it will use default partition 
+	e. Value: 
+	
+13. Properties:
+	a. bootstrap.servers
+	b. key.serializer 
+	c. value.serializer
+	And Others.... (above 3 are mandatory)
+
+	Properties props = new Properties();
+	props.put("bootstrap.servers", "localhost:9092,localhost:9093");
+	props.put("key.serializer","org.apache.kafka.common.serialization.StringSerializer");         
+	props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+	
+14. Producer workflow: https://www.youtube.com/watch?v=_RrgVDTd38M&list=PLkz1SCf5iB4enAR00Z46JwY9GGkaS2NON&index=11
+
+15. 
 	
 ----	
 1. ITVersity: Kafka bin path: /usr/hdp/2.6.5.0-292/kafka/bin
@@ -149,6 +230,17 @@ https://www.youtube.com/watch?v=NhDM9dFnTA8&list=PLf0swTFhTI8rM5AdWXObgQ-aN5gYyO
 		
 		
 ## Single node configuration 
+
+## Pre-request:
+	a. Check the Version compatibility of Kafka, Spark Streaming, target (Hbase, bigdata, etc) 
+	b. Go to Kafka library path in hadoop -> (Ex: In horton works) -> "cd /usr/hdp/2.6.5.0-292/kafka/libs" -> kafka jar will be here
+	c. kafka_2.11-1.0.0.2.6.5.0-292-source.jar.asc  ## Below are compatible version# 
+		a. 2.11 is for scala
+		b. 1.0.0 is for Kafka 
+		c. 2.6.5.0 is for Hadooop 
+		d. Note: Scala 2.11 is not compatiable with JDK 1.9, so use JDK 1.8
+		e. For SBT, use 0.13.17 
+		
 1. download & untar
 	$ wget https://www-eu.apache.org/dist/kafka/2.1.0/kafka_2.11-2.1.0.tgz
 	$ tar -xzf kafka_2.11-2.1.0.tgz
@@ -178,12 +270,14 @@ https://www.youtube.com/watch?v=NhDM9dFnTA8&list=PLf0swTFhTI8rM5AdWXObgQ-aN5gYyO
 	
 	## Validation for zookeeper
 	$ telnet <ip-address> 2181		## Use localhost in case of single node 
+	$ telnet localhost 2181			## Use localhost in case of single node 
 	$ jps
 		<processid> QuorumPeerMain
 	$ sh bin/kafka-server-start.sh -daemoan config/server.properties			## Using -daemoan to start the service in background
 	
 	## Validation for kafka server 
 	$ telnet <ipaddress> 9092 		## Use localhost in case of single node 
+	$ telnet localhost 9092			## 
 	
 	$ jps
 		<processid> QuorumPeerMain
@@ -222,6 +316,54 @@ https://www.youtube.com/watch?v=NhDM9dFnTA8&list=PLf0swTFhTI8rM5AdWXObgQ-aN5gYyO
 	a. Go to Cloudera Manager or Ambari and open the Kafka broker, it will show the listers and zookeeper.connect which is bootstrap-server 
 	b. Get the port number from listener. It is 6667 in ITVersity
 	c. 
+	
+##################################################################################
+Kafka - Initial setup 
+##################################################################################
+Ref: ITVersity: https://www.youtube.com/watch?v=8w7jQ601HJk&list=PLf0swTFhTI8rM5AdWXObgQ-aN5gYyOfKC&index=2
+
+## Pre-request:
+	a. Check the Version compatibility of Kafka, Spark Streaming, target (Hbase, bigdata, etc) 
+	b. Go to Kafka library path in hadoop -> (Ex: In horton works) -> "cd /usr/hdp/2.6.5.0-292/kafka/libs" -> kafka jar will be here
+	c. kafka_2.11-1.0.0.2.6.5.0-292-source.jar.asc  ## Below are compatible version# 
+		a. 2.11 is for scala
+		b. 1.0.0 is for Kafka 
+		c. 2.6.5.0 is for Hadooop 
+		d. Note: Scala 2.11 is not compatiable with JDK 1.9, so use JDK 1.8
+		e. For SBT, use 0.13.17 
+		
+1. download & untar
+	$ wget https://www-eu.apache.org/dist/kafka/2.1.0/kafka_2.11-2.1.0.tgz
+	$ tar -xzf kafka_2.11-2.1.0.tgz
+	
+2. SBT: IntelliJ - Choose the correct scala version and set the SBT as follows:
+	name := "MyKafkaProject"
+	version := "1.0"
+	scalaVersion := "2.11.12"
+	
+	## To pass the broker information as part of our program, include the below library as well (it is compatiable with most of the scala version).. Hardcoding is not good practice. 
+	libraryDependencies += "com.typesafe" % "config" % "1.3.2"
+	
+	## To include the scala and kafka libraries (we can use %% to get the scala version from above, but it is not required for kafka-clients ) 
+	libraryDependencies += "org.apache.kafka" % "kafka-clients" % "1.0.0"
+
+	NOTE: ## Finally click on "enable auto import" button in IntelliJ to import all the above libraries
+
+
+4. Maven: Dependency for Producer and Consumer API 
+
+	<dependency> 
+		<groupId>org.apache.kafka</groupId>
+		<artifactId>kafka-clients</artifactId>
+		<version>0.10.1.0</version>
+	</dependency> 
+	
+3. The above step will add the external libraries for the following packages	
+	a. org.apache.kafka ## This is a package name 
+		i. It has producer/consumer libraries
+		ii. It also has common library which can be used for 'serialization'/'deserialization'
+	b. com.typesafe
+	
 ##########################################################################
 Kafka - Execution using shell 
 ##########################################################################
@@ -262,6 +404,98 @@ kafka-console-consumer.sh \
 kafka-topics.sh --describe \
 --zookeeper nn01.itversity.com:2181,nn02.itversity.com:2181,rm01.itversity.com:2181 \
 --topic kafka-saranvisa-topic1
+
+
+##################################################################################
+SBT: To install SBT (Scala built tool)
+##################################################################################
+
+https://www.youtube.com/watch?v=k8XhuE1PE7A&list=PLkz1SCf5iB4enAR00Z46JwY9GGkaS2NON&index=9
+
+1. Pre-request: Java
+2. Install the sbt compatiable to windows or unix as needed 
+	https://www.scala-sbt.org/download.html
+	
+3. After the installation, create the below two files: https://www.learningjournal.guru/courses/kafka/kafka-foundation-training/producer-api/
+
+	##1: vi build.sbt 
+	name := "KafkaTest"
+
+    libraryDependencies ++= Seq(
+        "org.apache.kafka" % "kafka-clients" % "0.10.1.0"
+        exclude("javax.jms", "jms")
+        exclude("com.sun.jdmk", "jmxtools")
+        exclude("com.sun.jmx", "jmxri")
+        exclude("org.slf4j", "slf4j-simple")
+    )
+
+	##2: vi SimpleProducer.java
+	 import java.util.*;
+     import org.apache.kafka.clients.producer.*;                                    
+     public class SimpleProducer {                                    
+         public static void main(String[] args) throws Exception{
+
+            String key = "Key1";
+            String value = "Value-1";
+            String topicName = "SimpleProducerTopic";
+                                    
+            Properties props = new Properties();
+            props.put("bootstrap.servers", "localhost:9092,localhost:9093");
+            props.put("key.serializer","org.apache.kafka.common.serialization.StringSerializer");         
+            props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+                                    
+            Producer<String, String> producer = new KafkaProducer<>(props);                                    
+            ProducerRecord<String, String> record = new ProducerRecord<>(topicName,key,value);
+            producer.send(record);                
+            producer.close();
+            System.out.println("SimpleProducer Completed.");
+        }
+    }
+
+	$ sbt compile	## To compile the above program 
+	$ sbt run		## To execute the program 
+	
+	
+	##3: Here is a simple example of using the producer to send records with strings containing sequential numbers as the key/value pairs.
+	 Properties props = new Properties();
+	 props.put("bootstrap.servers", "localhost:9092");
+	 props.put("acks", "all");
+	 props.put("retries", 0);
+	 props.put("batch.size", 16384);
+	 props.put("linger.ms", 1);
+	 props.put("buffer.memory", 33554432);
+	 props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+	 props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+
+	 Producer<String, String> producer = new KafkaProducer<>(props);
+	 for (int i = 0; i < 100; i++)
+		 producer.send(new ProducerRecord<String, String>("my-topic", Integer.toString(i), Integer.toString(i)));
+
+	 producer.close();
+
+##################################################################################
+Kafka Configuration: Kafka uses key-value pairs in the property file format for configuration
+##################################################################################
+https://kafka.apache.org/documentation/#configuration
+
+3.1 Broker Configs
+3.2 Topic Configs
+3.3 Producer Configs
+3.4 Consumer Configs
+3.5 Kafka Connect Configs
+3.6 Kafka Streams Configs
+3.7 AdminClient Configs
+
+3.1 Broker Configs
+	The essential configurations are the following:
+		a. broker.id
+		b. log.dirs
+		c. zookeeper.connect
+	
+	Other important configs 
+		d. log.retention.ms 	(Default is time and 7 days)
+		e. log.retention.bytes 	(This is not a topic size, it is a size of partition)
+
 
 ##################################################################################
 Kafka-ansible-roles-playbook 	-- Pending 
