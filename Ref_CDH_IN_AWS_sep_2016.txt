@@ -15,12 +15,25 @@ The API also provides access to management functions:
 
 https://www.cloudera.com/documentation/enterprise/5-9-x/topics/cm_intro_automation_api.html#concept_hlz_m5x_fz
 
+
+
 ======================= Cloudera cluster 'manual' setup =========================================
 
 -------- Using Ubuntu in AWS
 http://gethue.com/hadoop-tutorial-how-to-create-a-real-hadoop-cluster-in-10-minutes/
 
 
+#################
+Topic: Hadoop 3.0
+#################
+https://www.youtube.com/watch?v=JXgRu9vw9so
+
+1. Need RHEL 7, RHEL 6 will not be supported
+2. HADOOP 3.0 : Released on Jan 2017, howevery there is no new components introduced in this
+
+#################
+Hadoop 2.x 
+#################
 ----Before installation
 1. Finalize the RedHat version  										** RedHat 6.5 **
 2. Identify the corresponding MySQL version suitable for Redhat    		** mysql57-community-release-el6-9.noarch.rpm **
@@ -310,14 +323,16 @@ hadoop fs -cat /tmp/sparkout
 
 Steps:
 -----
- Install MIT Kerberos
 	a. To install MIT Kerbros on "RHEL/CentOS/Oracle Linux"
 			$ yum install krb5-server krb5-libs krb5-workstation
 	b. To install MIT Kerbros on "Ubuntu/Debian"
 			$ apt-get install krb5-kdc krb5-admin-server
-	c. Two conf files
+	c. Two conf files & one ACL file. Here ACL stands for Access Control List (ACL) 
 		Vi /etc/krb5.conf
 		vi /var/kerberos/krb5kdc/kdc.conf
+		vi /var/kerberos/krb5kdc/kadm5.acl
+				Replace EXAMPLE.COM with your REALM ex: AWS.COM
+				*/admin@AWS.COM *
 
 	d. Edit "/etc/krb5.conf"
 		"Change the [realms] section of this file by replacing the default “kerberos.example.com” setting for the kdc and admin_server properties with the Fully Qualified Domain Name of the KDC server host"
@@ -344,27 +359,7 @@ Steps:
 		 .compute-1.amazonaws.com = AWS.COM
 		 compute-1.amazonaws.com = AWS.COM
 
-
-	e. Use the utility kdb5_util to create the Kerberos database:
-		1. On "RHEL/CentOS/Oracle Linux":	$ kdb5_util create -s
-		2. On "Ubuntu/Debian":				$ krb5_newrealm
-		
-	f. Start the KDC server and the KDC admin server:
-		1. On "RHEL/CentOS/Oracle Linux 6"	$ /etc/rc.d/init.d/krb5kdc start  , $ /etc/rc.d/init.d/kadmin start
-		2. On "RHEL/CentOS/Oracle Linux 7"  $ systemctl start krb5kdc, 			$ systemctl start kadmin
-		3. On "Ubuntu/Debian":			$ service krb5-kdc restart, 		$ service krb5-admin-server restart
-
-	g. Set up the KDC server to auto-start on boot:
-		1. On "RHEL/CentOS/Oracle Linux 6" 	$ chkconfig krb5kdc on, 			$ chkconfig kadmin on
-		2. On "RHEL/CentOS/Oracle Linux 7"	$ systemctl enable krb5kdc,			$ systemctl enable kadmin
-		3. On "Ubuntu/Debian"		$ update-rc.d krb5-kdc defaults		$ update-rc.d krb5-admin-server defaults
-		
-	h. Create a Kerberos Admin (or) RHEL Edit "vi /var/kerberos/krb5kdc/kdc.conf" (or) Ubuntu Edit "vi /etc/krb5kdc/kadm5.acl"
-		Kerberos principals can be created either on the KDC machine itself or through the network, using an “admin” principal. The following instructions assume you are using the KDC machine and using the kadmin.local command line administration utility. Using kadmin.local on the KDC machine allows you to create principals without needing to create a separate "admin" principal before you start.
-		
-		a. Create a KDC admin by creating an admin principal: kadmin.local -q "addprinc admin/admin".
-		b. Confirm that this admin principal has permissions in the KDC ACL. Using a text editor, open the KDC ACL file:
-			RHEL Edit "vi /var/kerberos/krb5kdc/kdc.conf" (or) Ubuntu Edit "vi /etc/krb5kdc/kadm5.acl"
+	e. Edit "vi /var/kerberos/krb5kdc/kdc.conf" 
 			[realms]
 				 AWS.COM = {
 				  master_key_type = aes256-cts
@@ -377,12 +372,54 @@ Steps:
 				  supported_enctypes = aes256-cts:normal
 				  default_principal_flags = +renewable
 				 }
+				 
+	f. Use the utility kdb5_util to create the Kerberos database:
+		1. On "RHEL/CentOS/Oracle Linux":	$ kdb5_util create -s
+		2. On "Ubuntu/Debian":			$ krb5_newrealm
+		
+	g. Start the KDC server and the KDC admin server:
+		1. On "RHEL/CentOS/Oracle Linux 6"	$ /etc/rc.d/init.d/krb5kdc start  , $ /etc/rc.d/init.d/kadmin start
+		2. On "RHEL/CentOS/Oracle Linux 7"  $ systemctl start krb5kdc, 			$ systemctl start kadmin
+		3. On "Ubuntu/Debian":		$ service krb5-kdc restart, 		$ service krb5-admin-server restart
+
+	h. Set up the KDC server to auto-start on boot:
+		1. On "RHEL/CentOS/Oracle Linux 6" 	$ chkconfig krb5kdc on, 			$ chkconfig kadmin on
+		2. On "RHEL/CentOS/Oracle Linux 7"	$ systemctl enable krb5kdc,			$ systemctl enable kadmin
+		3. On "Ubuntu/Debian"			$ update-rc.d krb5-kdc defaults		$ update-rc.d krb5-admin-server defaults
+		
+	i. Create a Kerberos Admin (or) RHEL Edit "vi /var/kerberos/krb5kdc/kadm5.acl" (or) Ubuntu Edit "vi /etc/krb5kdc/kadm5.acl"
+		Kerberos principals can be created either on the KDC machine itself or through the network, using an “admin” principal. The following instructions assume you are using the KDC machine and using the kadmin.local command line administration utility. Using kadmin.local on the KDC machine allows you to create principals without needing to create a separate "admin" principal before you start.
+		
+		a. Create a KDC admin by creating an admin principal: $ kadmin.local -q "addprinc admin/admin".
+		b. Confirm that this admin principal has permissions in the KDC ACL. Using a text editor, open the KDC ACL file:
 		c. Ensure that the KDC ACL file includes an entry so to allow the admin principal to administer the KDC for your specific realm. When using a realm that is different than EXAMPLE.COM, be sure there is an entry for the realm you are using. If not present, principal creation will fail. For example, for an admin/admin@HADOOP.COM principal, you should have an entry: */admin@HADOOP.COM *.
 		d. After editing and saving the kadm5.acl file, you must restart the kadmin process:
 			1. On "RHEL/CentOS/Oracle Linux 6"	$ /etc/rc.d/init.d/krb5kdc start  , $ /etc/rc.d/init.d/kadmin start
 			2. On "RHEL/CentOS/Oracle Linux 7"  $ systemctl start krb5kdc, 			$ systemctl start kadmin
 			3. On "Ubuntu/Debian":		$ service krb5-kdc restart, 		$ service krb5-admin-server restart
+	j. You can connect to the kerberos admin server using 
+		a. $ kadmin.local -q "addprinc admin/admin"
+		b. $ kadmin -p admin/admin@HADOOP.COM (REALM)
+		
+	k. Login to Cloudera Manager/Ambari and Admin menu -> Kerberos -> Enable Kerberos
+		and Provide the REALM, KDC Server host and KDC Admin host details
 
+
+###########
+Topic: LDAP
+############
+	Default port: 389
+	https://www.youtube.com/watch?v=vB1SN0LBicE&list=PLY-V_O-O7h4dwTtMk77X6JO-AcENbSBr_&index=3
+	$ ambari-server sync-ldap --user=user.txt 
+	Pre-request: 
+		a. Update user.txt with list of users in comma separated
+		b. Update the Open LDAP (or) Centrify with list of Users 
+		c. Finally run the above sync-ldap command, so that LDAP users will be automatically listed in Ambari 
+
+	$ ambari-server sync-ldap --group=group.txt 
+	Pre-request: 
+		a. Update group.txt with list of users in comma separated
+		b. Update the Open LDAP (or) Centrify with list of groups 
 #################
 
 # How to check we have AES-256 in our environment?
