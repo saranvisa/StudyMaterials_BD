@@ -301,9 +301,89 @@ hadoop fs -cat /tmp/sparkout
 
 #########################################################
 #### KERBEROS INSTALLATION & CONFIGURUATION ####
-
 #########################################################
 #### PRE-REQUEST AES-256 ####
+
+######### Verygood reference for Kerberos installation ############
+1. https://www.youtube.com/watch?v=4TwU0LwDJAg
+2. https://docs.hortonworks.com/HDPDocuments/HDP3/HDP-3.1.0/authentication-with-kerberos/content/kerberos_optional_install_a_new_mit_kdc.html
+
+Steps:
+-----
+ Install MIT Kerberos
+	a. To install MIT Kerbros on "RHEL/CentOS/Oracle Linux"
+			$ yum install krb5-server krb5-libs krb5-workstation
+	b. To install MIT Kerbros on "Ubuntu/Debian"
+			$ apt-get install krb5-kdc krb5-admin-server
+	c. Two conf files
+		Vi /etc/krb5.conf
+		vi /var/kerberos/krb5kdc/kdc.conf
+
+	d. Edit "/etc/krb5.conf"
+		"Change the [realms] section of this file by replacing the default “kerberos.example.com” setting for the kdc and admin_server properties with the Fully Qualified Domain Name of the KDC server host"
+		
+		[libdefaults]
+		 default_realm = AWS.COM
+		 dns_lookup_realm = false
+		 dns_lookup_kdc = false
+		 ticket_lifetime = 24h
+		 renew_lifetime = 7d
+		 forwardable = true
+		 default_tgs_enctypes = aes256-cts
+		 default_tkt_enctypes = aes256-cts
+		 permitted_enctypes = aes256-cts
+		 udp_preference_limit = 1
+
+		[realms]
+		 MYAWS.COM = {
+		  kdc = ec2-34-192-193-57.compute-1.amazonaws.com:88
+		  admin_server = ec2-34-192-193-57.compute-1.amazonaws.com:749
+		 }
+
+		[domain_realm]
+		 .compute-1.amazonaws.com = AWS.COM
+		 compute-1.amazonaws.com = AWS.COM
+
+
+	e. Use the utility kdb5_util to create the Kerberos database:
+		1. On "RHEL/CentOS/Oracle Linux":	$ kdb5_util create -s
+		2. On "Ubuntu/Debian":				$ krb5_newrealm
+		
+	f. Start the KDC server and the KDC admin server:
+		1. On "RHEL/CentOS/Oracle Linux 6"	$ /etc/rc.d/init.d/krb5kdc start  , $ /etc/rc.d/init.d/kadmin start
+		2. On "RHEL/CentOS/Oracle Linux 7"  $ systemctl start krb5kdc, 			$ systemctl start kadmin
+		3. On "Ubuntu/Debian":			$ service krb5-kdc restart, 		$ service krb5-admin-server restart
+
+	g. Set up the KDC server to auto-start on boot:
+		1. On "RHEL/CentOS/Oracle Linux 6" 	$ chkconfig krb5kdc on, 			$ chkconfig kadmin on
+		2. On "RHEL/CentOS/Oracle Linux 7"	$ systemctl enable krb5kdc,			$ systemctl enable kadmin
+		3. On "Ubuntu/Debian"		$ update-rc.d krb5-kdc defaults		$ update-rc.d krb5-admin-server defaults
+		
+	h. Create a Kerberos Admin (or) RHEL Edit "vi /var/kerberos/krb5kdc/kdc.conf" (or) Ubuntu Edit "vi /etc/krb5kdc/kadm5.acl"
+		Kerberos principals can be created either on the KDC machine itself or through the network, using an “admin” principal. The following instructions assume you are using the KDC machine and using the kadmin.local command line administration utility. Using kadmin.local on the KDC machine allows you to create principals without needing to create a separate "admin" principal before you start.
+		
+		a. Create a KDC admin by creating an admin principal: kadmin.local -q "addprinc admin/admin".
+		b. Confirm that this admin principal has permissions in the KDC ACL. Using a text editor, open the KDC ACL file:
+			RHEL Edit "vi /var/kerberos/krb5kdc/kdc.conf" (or) Ubuntu Edit "vi /etc/krb5kdc/kadm5.acl"
+			[realms]
+				 AWS.COM = {
+				  master_key_type = aes256-cts
+				  max_life = 180d 0h 0m 0s
+				  max_renewable_life = 7d 0h 0m 0s
+				  acl_file = /var/kerberos/krb5kdc/kadm5.acl
+				  dict_file = /usr/share/dict/words
+				  admin_keytab = /var/kerberos/krb5kdc/kadm5.keytab
+				  #supported_enctypes = aes256-cts:normal aes128-cts:normal des3-hmac-sha1:normal arcfour-hmac:normal des-hmac-sha1:normal des-cbc-md5:normal des-cbc-crc:normal
+				  supported_enctypes = aes256-cts:normal
+				  default_principal_flags = +renewable
+				 }
+		c. Ensure that the KDC ACL file includes an entry so to allow the admin principal to administer the KDC for your specific realm. When using a realm that is different than EXAMPLE.COM, be sure there is an entry for the realm you are using. If not present, principal creation will fail. For example, for an admin/admin@HADOOP.COM principal, you should have an entry: */admin@HADOOP.COM *.
+		d. After editing and saving the kadm5.acl file, you must restart the kadmin process:
+			1. On "RHEL/CentOS/Oracle Linux 6"	$ /etc/rc.d/init.d/krb5kdc start  , $ /etc/rc.d/init.d/kadmin start
+			2. On "RHEL/CentOS/Oracle Linux 7"  $ systemctl start krb5kdc, 			$ systemctl start kadmin
+			3. On "Ubuntu/Debian":		$ service krb5-kdc restart, 		$ service krb5-admin-server restart
+
+#################
 
 # How to check we have AES-256 in our environment?
 # wget the file is getting some trouble, so use winscp
