@@ -1,0 +1,592 @@
+youtube cloudera:
+	a. Agent to server 
+	b. server to agent 
+	https://www.youtube.com/watch?v=zHZ0A5ArbWc
+	https://www.youtube.com/watch?v=oYKgjOQrBmc&list=PLK4dtoYkr2axjdgu9fMwgkVkgP43i-3nG&index=7
+
+Cloudera Doc: 
+	http://www.cloudera.com/documentation/enterprise/latest/topics/how_to_configure_cm_tls.html
+
+https://www.digicert.com/
+
+############################# 1. Keytool ##################################################
+
+Note1: Create a keystore using keytool command 
+		* truststore is used to store public certificates 
+		* keystore is used to store private certificates of client or server
+		
+Note2: Get the keytool commands 
+		$ keytool -help
+		Key and Certificate Management Tool
+		 -certreq            Generates a certificate request
+		 -changealias        Changes an entry's alias
+		 -delete             Deletes an entry
+		 -exportcert         Exports certificate
+		 -genkeypair         Generates a key pair
+		 -genseckey          Generates a secret key
+		 -gencert            Generates certificate from a certificate request
+		 -importcert         Imports a certificate or a certificate chain
+		 -importpass         Imports a password
+		 -importkeystore     Imports one or all entries from another keystore
+		 -keypasswd          Changes the key password of an entry
+		 -list               Lists entries in a keystore
+		 -printcert          Prints the content of a certificate
+		 -printcertreq       Prints the content of a certificate request
+		 -printcrl           Prints the content of a CRL file
+		 -storepasswd        Changes the store password of a keystore
+
+		Use "keytool -command_name -help" for usage of command_name
+
+Step1: Create a keystore using Generates a key pair option.
+		Note: Login to the host where you have installed Cloudera Manager and generate keystore on the same host 
+		
+		$ keytool -genkeypair -validity 180 -keystore /opt/keystore -alias jetty  -keyalg RSA 
+		Note: 
+		a. The keystore path (/opt/keystore) must be accessible by Cloudera manager
+		b. It will prompt for password, store the password in a safe place. Use the same password in Cloudera Manager 
+		c. Change the permission of keystore file. 
+		
+		$ keytool -genkeypair -help
+		keytool -genkeypair [OPTION]...
+
+		Options:
+		 -alias <alias>                  alias name of the entry to process
+		 -keyalg <keyalg>                key algorithm name
+		 -keysize <keysize>              key bit size
+		 -sigalg <sigalg>                signature algorithm name
+		 -destalias <destalias>          destination alias
+		 -dname <dname>                  distinguished name
+		 -startdate <startdate>          certificate validity start date/time
+		 -ext <value>                    X.509 extension
+		 -validity <valDays>             validity number of days
+		 -keypass <arg>                  key password
+		 -keystore <keystore>            keystore name
+		 -storepass <arg>                keystore password
+		 -storetype <storetype>          keystore type
+		 -providername <providername>    provider name
+		 -providerclass <providerclass>  provider class name
+		 -providerarg <arg>              provider argument
+		 -providerpath <pathlist>        provider classpath
+		 -v                              verbose output
+		 -protected                      password through protected mechanism
+
+		
+		 
+Step2: Setup SSL/TLS in the Cloudera Manager 
+	a. Login to Cloudera manager as admin user -> Administration -> Setttings 
+	b. Set up the below options
+		1. Use TLS Encryption for Admin Console  		# Disabled by default. Let it be disabled 
+		2. Use TLS Authentication of Agents to server 	# Disabled by default. Let it be disabled  		
+		3. Use TLS Encryption for Agent  				# Enable 
+ 		4. Path to TLS keystore file 	 				# /opt/keystore. May need to specify the .jks file name too? not sure 
+		5. Keystore password			 				# Provide the password generated in the step 1
+		6. Save the above changes 
+	c. Note: Any changes to settings need a cloudera server and agent restart 
+		
+Step3: Enable and Configure TLS on agent machines
+	a. Login to agent node and edit /opt/cloudera-scm-agent/config.ini 
+		# Use_tls		## Specify 1 to enable TLS on the agent, 0 to disable by default 
+	b. Repeat the above step on all the agent nodes 
+	
+Step4: Restart the cloudera server and agent services. 
+	a. $ service cloudera-scm-service restart
+	b. $ service cloudera-scm-agent restart 
+
+step5: Check the log & verify the heart beat between server and agent 
+	a. cd /var/log/cloudera-scm-agent
+		$ tail -f cloudera-scm-agent.log 
+
+	b. cd /var/log/cloudera-scm-server 
+		$ tail -f cloudera-scm-server.log 
+		
+	c. CM -> Host -> check the last heart beat . 
+			In case of issue : CM -> Host -> Inspect All Hosts 
+		
+
+----------------------------------------
+** Important terms, path, etc
+a. TLS : Transport Layer Security
+b. JAVA_HOME
+	export JAVA_HOME=/usr/java/jdk1.8.0_141-cloudera
+c. Keytool: It is a utility to generate "Java keystore(JKS)" and "certificate signing request (CSR)"
+	JAVA_HOME/bin/keytool
+d. Server: Two files needs to be generated and the corresponding passwords to be maintained and updated in Cloudera Manager
+	a. CM TLS/SSL Server JKS "Keystore" File location: "ex: /etc/cloudera-scm-server/cm_keystore.jks"
+	b. CM TLS/SSL Certificate "Trust Store" File: "ex: /etc/cloudera-scm-server/trusted.jks"
+e. Agent & server: On each agent host (including the Cloudera Manager Server host, which also has an agent), open the /etc/cloudera-scm-agent/config.ini configuration file and set the use_tls parameter in the [Security] section as follows: 
+	use_tls=1
+	verify_cert_file=/opt/cloudera/security/pki/rootca.pem  ## Enable Server Certificate Verification on Cloudera Manager Agents
+
+f. When enabling TLS for the Cloudera Manager Server admin interface, you must set the Java truststore location and password in the Cloudera Management Services configuration. Otherwise, roles such as Host Monitor and Service Monitor cannot connect to Cloudera Manager Server and will not start
+
+
+
+############################# 2. OPENSSL ###################################################
+## Practical 1: ###### Suitable for Internal site - Using "Self signed" CA ##############
+## Step 1: To generte a new 'rsa' private key and .crt together
+	$ openssl req -x509 -newkey rsa:4096 -keyout mysite.key -out mysite.crt -days 365
+	
+	## It will ask for a password and following details 
+	writing new private key to 'mysite.key'
+	Enter PEM pass phrase:
+
+	Country Name (2 letter code) [AU]:US
+	State or Province Name (full name) [Some-State]:new jersecy
+	Locality Name (eg, city) []:woodbridge
+	Organization Name (eg, company) [Internet Widgits Pty Ltd]:my org
+	Organizational Unit Name (eg, section) []:technical
+	Common Name (e.g. server FQDN or YOUR name) []:kumar
+	Email Address []:
+
+	## The above command will create two files 
+	mysite.key 
+	mysite.crt 
+
+## Step 2: Store the certificate in some safe Credential Vault 
+	Add the public key to the cert store (or) trust store. 
+
+--------
+## Practical 2: ###### Steps follwed in Silver*an: Sample steps for CA Certificate used for Splunk applications ####
+
+## Order of process in silver*an
+	a. create a 'rsa private key'
+	b. Create a public key '.crt' based on 'rsa private key' 
+	c. send only public key to CA. CA will respond with 3 certificates. Server certificate, Intermediate certificate and root certificate. 
+	d. Combine all the certificate to Create a chain of .pem 
+	e. Upload the 'rsa private key' and 'chain of .pem' to the Credential Vault NG to store the credential
+	f. validate and restart the application 
+	
+## Step1: Use /opt/splunk/etc/auth as your working directory
+	$ cd /opt/splunk/etc/auth
+	
+## Step2: Create a local folder 'mycerts' and temporary folder 'tempcerts' and move the old local certificte to tempcerts folder
+	$ mv ./mycerts/*  ./tempcerts/
+	
+## Step3: cd to mycerts folder and Generate a new private key for Splunk Web.
+	
+	## The domain name has to be added in SAN: Subject Alternate Name under 'reqexts' extension 
+	$ cd mycerts
+	$ openssl req -new -nodes -newkey rsa:2048 -keyout mySplunkWebPrivateKey.key -out mySplunkWebCert.csr -reqexts SAN -config < (cat /etc/pki/tls/openssl.cnf < (printf "[SAN]\nsubjectAltName=DNS:<hosturl1>,DNS:<hosturl2ifany>"))
+
+	## It will ask for the following details & 'extra' attributes for password 
+	writing new private key to 'mysite.key'
+	Enter PEM pass phrase:
+
+	Country Name (2 letter code) [AU]:US
+	State or Province Name (full name) [Some-State]:new jersecy
+	Locality Name (eg, city) []:woodbridge
+	Organization Name (eg, company) [Internet Widgits Pty Ltd]:my org
+	Organizational Unit Name (eg, section) []:technical
+	Common Name (e.g. server FQDN or YOUR name) []:kumar
+	Email Address []: <<commpany email id>>
+
+	A challenge password :
+	
+	## The above command will create two files 
+		mySplunkWebPrivateKey.key
+		mySplunkWebCert.csr
+	
+## Step4: Go to company's CA website and provide the following details:
+
+	subject: <splunk site name>
+	AppDirType: Application  		## Type is Application 
+	AppID:					 		## Application ID
+	email: 			
+	Requester:						## ID of the requester 
+	Environment:			 		## Prod/UAT
+	Template:				 		## WebServer
+	Certificate Signing Request: 	## Copy paste the contects of "mySplunkWebCert.csr"
+	
+## Step5: The Certificate Authority (CA) will send 
+	a. an email with your "Server certificate" attached 
+	b. a "link" to the latest "certificate chains"
+
+## Step6: First ".pem": "For Server Certificate": Create a new .pem file and copy/paste the content of "Server Certificate" from the above mail
+	$ cd /opt/splunk/etc/auth/mycerts
+	$ vi Ur_Server_hostname.pem   (or) vi Ur_Alias_name.pem 
+	
+## Step7: Second ".pem": "For Intermediate Certificate": Open the link sent in the email and copy the contents of the "my org Corp Issuing CA(1/2)" certificate in the base64 format. Certificate authority could be either CA1 or CA2 as indicated in the email. Issuer should be "my org Root CA". Create a new .pem file and paste the content of the intermediate certificate 
+	$ vi my_corp_issuing_1_ca.pem (or)  vi my_corp_issuing_2_ca.pem
+	
+## Step8: Third ".pem": "For Root Certificate": Open the link sent in the email and copy contents of the "Org name Root CA" certificate in the base64 format. Create a new .pem file and paste the content of the root certificate
+	$ vi my_org_root_ca.pem 
+	
+## Step9: Concatenate the above 3 certificate in the order "Server certificate, Intermediate certificate, root certificate" to splunk-chain.pem
+	$ cat Ur_Server_hostname.pem my_corp_issuing_1_ca.pem my_org_root_ca.pem > splunk-chain.pem 
+	
+## Stpe10: Upload the splunk-chain.pem to the Credential Vault NG to store the credential: 
+## Step11: Verify new certificate and private key are pushed by credvault to host 
+## Step12: restart the splunk 
+
+--------
+## Practical 3: ###### Suitable for public site - Using third party CA signed #########
+## Step1: To generate a 'rsa' private key (ex: To generate RSA)
+	$ openssl genrsa -out mysite.key 4096		## 4096 is the key length and output goes to mysite.key 
+	$ cat mysite.key			
+	
+		-----BEGIN RSA PRIVATE KEY-----
+	MIII+wIBAAKCAfgDExf+ooMuwdJfE3fyXWf9HyDzq6Os3bJQR+1JBUsq4+1az0ms
+	adaNCr5fVRF+zJu7y/bv4JklIkGsewx3O4olI0lDyyoTbf2al53Aom2/7ojvlhvO
+	kTD9c/eRg1GmUGsGRdDnaSA8xyoFspKeST4HnNVd5QQfT4t+dz9um3EBMQfyL/A
+
+	## The output is a PEM formated RSA private key. We can also extract public key out of it. So it is a private and public key  
+	
+## Step2: To generate  "Certificate Signing Request" .csr using 'rsa private key' (or) Create a new SSL certificate request using openssl. 
+	$ openssl req -new -key mysite.key -out mysite.csr 	## Use the key generated above and output goes to mysite.csr.
+
+	## It will ask for the below information 
+	Country Name (2 letter code) [AU]:US
+	State or Province Name (full name) [Some-State]:NewJersey
+	Locality Name (eg, city) []:woodbridge
+	Organization Name (eg, company) [Internet Widgits Pty Ltd]:My company
+	Organizational Unit Name (eg, section) []:Technology
+	Common Name (e.g. server FQDN or YOUR name) []:kumar
+	Email Address []:
+
+	Please enter the following 'extra' attributes
+	to be sent with your certificate request
+	A challenge password []:myorg
+	An optional company name []:mycomp
+	
+	$ cat mysite.csr
+	-----BEGIN CERTIFICATE REQUEST-----
+	MIIEujCCAqoCAQAwWTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAk5KMQswCQYDVQQH
+	DAJXQjELMAkGA1UECgwCTVkxEzARBgNVBAsMClRlY2hub2xvZ3kxDjAMBgNVBAMM
+	BWt1bWFyMIICGTANBgkqhkiG9w0BAQEFAAOCAgYAMIICAQKCAfgDExf+ooMuwdJf
+	E3fyXWf9HyDzq6Os3bJQR+1JBUsq4+1az0msadaNCr5fVRF+zJu7y/bv4JklIkGs
+
+## Step3: Send the "mysite.csr" file to CA of your option and get it signed as "mysite.crt" 
+
+
+-----------------------------------
+### Open SSL Commands:
+
+## Part1: Admin commands to manage Certificate operation 
+s_client	## Stands for secure client 
+	openssl s_client -connect qualys.com:443 < /dev/null
+	openssl s_client -showcerts -connect www.google.com:443 < /dev/null     #show all inter. certs too
+	openssl s_client -connect -tls1_2 qualys.com:443 < /dev/null 	       	#connect using TLSv1.2 only
+
+x509
+	openssl x509 -in www.google.com.crt -noout –text  #decode the crt file
+	openssl s_client -connect google.com:443 < /dev/null 2>/dev/null | openssl x509  -in /dev/stdin -noout –text  #take input from stdin spit by s_client
+	openssl s_client -connect google.com:443 < /dev/null 2>/dev/null | openssl x509 –noout –dates #check expiry date
+
+genrsa/rsa
+	openssl genrsa -out mysite.key 4096                  #generate 4096 bit rsa key
+	openssl rsa -noout -text -check -in mysite.key       #display the private key components
+	openssl rsa -in mysite.key -pubout > mysite.key.pub  #extract public key
+	openssl rsa -in mysite.key.pub -pubin -text –noout   #display the public key components
+
+req
+	openssl req -new -key mysite.key -out mysite.csr  									# new CSR, send this to CA for signing
+	openssl req -x509 -newkey rsa:4096 -keyout mysite.key -out mysite.crt -days 365 	# self signed cert
+
+s_server
+	openssl s_server -cert mycert.crt -key mysite.key -www -accept 4443 #start ssl server on port 4443
+
+ciphers
+	openssl ciphers -v 'DHE-RSA-AES256-SHA' 		#displays all without a cipher arguement
+
+crl
+	curl -s http://pki.google.com/GIAG2.crl  | openssl crl -inform DER -text -noout -in /dev/stdin
+
+Miscellaneous 
+	openssl x509 -noout -modulus mysite.crt | openssl sha256  #all md5sums should be 
+	openssl req -noout -modulus mysite.csr | openssl sha256   #the same if they belong
+	openssl rsa -noout -modulus mysite.key | openssl sha256   #to the same website
+
+## Part 2: For Encryption and Decryption verification 
+dgst
+	openssl dgst -sha256 -sign privkey.pem -out input_message.tar.gz.sig input_message.tar.gz        #sign
+	openssl dgst -sha256 -verify pubkey.pem -signature input_message.tar.gz.sig input_message.tar.gz #verify
+
+enc
+	openssl enc -aes-256-cbc -salt -in file.txt -out file.txt.enc [-k PASS]   #encrypt
+	openssl enc -aes-256-cbc -d -in file.txt.enc -out file.txt [-k PASS]      #decrypt
+
+base64
+	openssl base64 -in file.txt -out file.txt.base64                          #base64 encoding
+	openssl base64 -d -in file.txt.base64 -out file.txt                       #base64 decoding
+
+ecparam
+	openssl ecparam -list_curves                                           #list all ECC curves
+	openssl ecparam -name secp256k1 -genkey -noout -out secp256k1-key.pem  #create key for curve secp256k1
+
+passwd
+	openssl passwd -1 -salt alphanumeric MyPassword   #create shadow-style password
+
+rand
+	openssl rand -out random-data.bin 64              #create 64bytes random data
+	head -c 64 /dev/urandom | openssl enc -base64     #get 64 random bytes from urandom and base64 encode
+
+---------------------------------------
+** Things to note
+
+$ openssl -h		## To get general help about openssl 
+$ openssl ca -h 	## To get help about a particular sub components 'ca' 
+
+1. Tools:
+	Both Openssl and Keytool comes with OS by default 
+	
+	a. Openssl: OpenSSL is a robust, commercial-grade, and full-featured toolkit for the Transport Layer Security (TLS) and Secure Sockets Layer (SSL) protocols. It is also a general-purpose cryptography library. 
+		
+	OpenSSL works with standard formats (PEM/CER/CRT/PKCS/etc) but does not manipulate KeyStore files. It is possible to generate a key and/or certificate with OpenSSL, and then import that key/cert into a KeyStore using keytool, but you can't put the key/cert into the KeyStore directly using OpenSSL.
+		
+	b. Keytool: Keytool is a tool that comes with Java that works with KeyStores - it can create KeyStores and manipulate keys and certificates inside them. It can also create keys and sign certificates. So it is both a key generation and a KeyStore-file-administration tool.
+	
+2. 	Encoding:
+
+	DER Standard (Distinguised Encoding Rules) => Bindary DER encoded certs appears as .crt/.cer 
+	PEM Standard => ASCII (base64) armored data prefix with a 'BEGIN' appears as .pem/.crt/.cer 
+	
+	# Encoding Conversion (To convert one form of certificate to another form)
+	$ openssl x509 -in ServerCertificate.cer -outform der -out ServerCertificate.der 
+	$ openssl x509 -in ServerCertificate.der -inform der -outform pem -out ServerCertificate.pem 
+	
+3. Acronym:
+
+	a) CA : Certificate Authority 
+		a.1. "CA Signed Certificate" is a "Root SSL certificate" issued by a trusted certificate authority (CA). 
+			ex: Godaddy, Symantec, https://www.geotrust.com//
+		a.2. "Self signed Certificate" . For self or inside the organization
+	
+	b) .pem stands for Privacy Enhanced Mail (PEM), it simply indicates a base64 encoding with header and footer lines. Mail traditionally only handles text, not binary which most cryptographic data is, so some kind of encoding is required to make the contents part of a mail message itself (rather than an encoded attachment). The contents of the PEM are detailed in the header and footer line - .pem itself doesn't specify a data type - just like .xml and .html do not specify the contents of a file, they just specify a specific encoding;
+	
+	c) .csr stands for Certificate Signing Request, it contains information such as the public key and common name required by a Certificate Authority to create and sign a certificate for the requester, the encoding could be PEM or DER 
+	
+	d) .crt (is a public key) stands simply for certificate, usually an X509v3 certificate, again the encoding could be PEM or DER; a certificate contains the public key, but it contains much more information (most importantly the signature by the Certificate Authority over the data and public key, of course)
+	
+	e) .cer (is a public key) stands simply for certificate
+	
+	f) .key (is a private key) can be any kind of key, but usually it is the private key - OpenSSL can wrap private keys for all algorithms (RSA, DSA, EC) in a generic and standard PKCS#8 structure, but it also supports a separate 'legacy' structure for each algorithm, and both are still widely used even though the documentation has marked PKCS#8 as superior for almost 20 years; both can be stored as DER (binary) or PEM encoded, and both PEM and PKCS#8 DER can protect the key with password-based encryption or be left unencrypted;
+	
+	g) 	Diff between .crt AND .cer?
+		.crt => "Unix/Linux convention of binary DER or Base64 PEM". This is a certificate
+		.cer => "Microsoft convention of binary DER or Base 64 PEM". This is a certificate
+		.key => "Private/Public PKCS#8 keys". This is NOT a certificate
+		
+	h) Base64 
+	
+	i) AES: 
+		a. AES stands for Advanced Encryption Standard. 
+		b. One of the most recommended Symmetric Key Encryption Algorithm.
+		c. AES supports 128, 192 and 256 bits length
+		
+	j) RSA : RSA is a Public Key Encryption algorithm, Named after the inventor
+		a. This is a Asymetirc Key Algorithm. 
+		b. Good for Encryption  & Signing but Bad for key exchange 
+		c. SSL is always use RSA for encryption
+	
+	k) Hashing Algorithm: Variable size input -> Fixed size output. 
+		a. One way function to convert "variable input size" into a "fixed size" string. That uniqly identify the input. This is one way because we cannot convert the output into input.  
+		b. Different hash functions will decide the fixed size of ouput. Ex: MD5 (32 char), SHA1 (40 char), SHA2 (64 char), SHA3, etc. Here SHA2 is recommended hash function.
+		c. example:
+			$ echo "test1" > file1.txt
+			$ echo "test2" > file2.txt
+			$ openssl dgst -md5 file1.txt file2.txt 		## Sometimes it will give same output for both the file, so not recommended
+			$ openssl dgst -sha1 	file1.txt file2.txt 
+			$ openssl dgst -sha256 	file1.txt file2.txt 	## Sha2 uses the keyword sha256 
+			
+	l) X509 format Certificate meets software & industry standards
+	
+4. Port #
+	a. LDAP URL: ldap://10.40.15.85:389	## Port for ldap: 389
+	b. SSL/TSL : TSL Port # 443 (or) HTTPS port # 443 and HTTP port # 80 
+	c. 
+
+5. Structure of a Certificate: 
+
+	The result of the below openssl command has two parts (Data and Signature)
+	$ openssl s_client -connect google.com:443 < /dev/null	| openssl	x509 -in /dev/stdin -text -noout
+	
+	a. Data: 
+		1. Version:
+		2. Serial Number
+		3. Signature Algorithm
+		4. Issuer: C=US, O=Google Inc, CN=Google Internet Authority G2 
+		5. Validity: Start and End date
+		6. Subject: C=US, ST=California, L=Mountainview, O=Google Inc, CN=www.google.com 
+		7. Subject's public key
+		8. X509 Extensions:
+	b. Signature: 
+		1. Signature Algorithm
+		2. Signature
+		
+6. Waht is x509?
+	Setting up OpenSSL to generate X509 certificates:
+	
+	In cryptography, X.509 is a standard defining the format of public key certificates. X.509 certificates are used in many Internet protocols, including TLS/SSL, which is the basis for HTTPS, the secure protocol for browsing the web. They are also used in offline applications, like electronic signatures
+		
+7. Types of Certificate based on 'Trust level' (DV, OV, EV)
+	a. DV  - Domain Validated (Basic): 
+		1. Low cost 
+		2. Not suitable for Payment, Money transaction, etc 
+		3. Green Padlock 
+		4. Low price
+		5. Quick issuance within a minute 
+		6. Reissue as many times as needed during the validity period
+		7. Validation process (email, file, registrar)
+		8. https://aboutssl.org/what-is-domain-validated-ssl-certificate/
+		
+	b. OV - Organization Validated (Enhanced)
+		1. Green padlock
+		2. One to three days for issuance
+		3. More trusted than DV
+		4. Organization name is validated as part of the certificate (Organization and Subject are filled up)
+		
+	c. EV - Extended Validated (Advanced). 
+		1. Suitable for Payment, money transaction, etc 
+		2. Green address bar + Organization name + Trust Seal 
+		3. Up to 10 business days for issuance & Verify strict validation process 
+		4. OV by default + High 256 key encryption with 2048 bit key length
+	
+8. SSL Errors:
+	a. SSL_ERROR_NO_CERTIFICATE
+	b. SSL_ERROR_WRONG_CERTIFICATE		## Config issue: When Private Key and key database are not matching. 
+	c. SSL_ERROR_UNSUPPORTED_VERSION
+	d. SSL_ERROR_BAD_CERT_DOMAIN		## The requested domain does not match to the server certificate 
+	e. SSL_ERROR_UNKNOWN_CIPHER_SUITE	
+	f. SSL_ERROR_UNKNOWN_CA_ALERT
+	g. SSL_ERROR_REVOKE_CERT_ALERT
+	
+	https://badssl.com
+
+9. What is trust store and keystore?
+	
+	Keystore vs Trust store: escription. Both keystore and truststore is used to store SSL certificates in Java 
+		* truststore is used to store public certificates 
+		* keystore is used to store private certificates of client or server
+	
+	a. Repository of trusted CA Certificate 
+	b. Shipped as part of the applicaion 
+	c. Truststore can be modified
+	d. Different from Keystore. 
+	e. Application trust store 
+		a. Browser	
+			-> Public key of all major CA's come with release 
+		b. JAVA (tomcat, coldfustion, etc)
+			-> Mostly there but less frequently updated 
+			-> You need to take care if customized 
+			
+			
+
+-----------------------------------------
+
+1. Version 
+	SSL 1.0  			1994-1995
+	SSL 2.0  			1995-2011
+	SSL 3.0  			1996-2015
+	TLS 1.0 (SSL 3.1) 	1999-
+	TLS 1.2 			2006-
+	TLS 1.3				2018-
+	
+2. SSL Architecture
+	a. Certificate Authority (CA) (ex: Godaddy, Symantec) -> Browser Vendor (ex: Google chrome)
+		a.1. CA Publishes its root certificate to all browser vendor 
+	b. Browser vendor -> Client App 
+		b.1. CA's root certificate is distributed as part of the browser applications
+	
+	c. Certificate Authority (CA) (ex: Godaddy, Symantec) -> Web server 
+	
+	d. Client App -> Web server 
+	
+3. sample site with expired certificate: https://expired.badssl.com/
+
+4. "CA Signed Certificate" vs "Self signed Certificate"
+	a. Singed by CA (third party) 				vs 		Signed by website and owner himself
+	b. Ideal for public use						vs 		Ideal for internal use (organization internal level)
+	c. Trusted by browsers that have the 		vs		Not trusted by browser until you import your public key manually
+		root certificate of the CAs in 					into browser's trust store 
+		their trust storepasswd				
+	d. Renewals/Modification in cert do not 	vs		Renewals/Modification in cert requires re-import of the new cert to 
+		require change at browser side 					browser's trust store 
+	e. You buy it from CA						vs		No cost as you sign it 	yourself 
+	f. Leaf and intermediate certificates 		vs		Root certificates 
+	
+5. Openssl and Keytool
+	$ openssl s_client -connect google.com:443 
+	$ openssl s_client -connect google.com:443 < /dev/null													## To get a clean output
+	$ openssl s_client -connect google.com:443 < /dev/null	| openssl x509 -in /dev/stdin -text -noout	## Output in readable format
+	
+6. Encryption Algorithm
+	To encrypt and decrypt
+	
+	a. Private/Symmetric Key Encryption Algorithm
+	b. Public/Asymetirc key encrypt Algorithm
+	c. Hashing Algorithm
+	
+-----------------------------------------
+
+1. What is TLS? Diff between TLS and SSL?
+	Transport Layer Security (TLS) is the successor to SSL. Secure Sockets Layer (SSL) is a cryptographic protocol that enables secure communications over the Internet. 
+
+	SSL and TLS are both cryptographic protocols that provide authentication and data encryption between servers, machines and applications operating over a network (e.g. a client connecting to a web server). SSL is the predecessor to TLS.
+
+
+2. Why do we need TLS?
+	To encrypt the data "in-Motion" (or) data "in-transit". 
+	We can use KMS/KTS, other methods to encrypt the data "in-REST"
+
+	When you configure authentication and authorization on a cluster, Cloudera Manager Server sends sensitive information over the network to cluster hosts, such as Kerberos keytabs and configuration files that contain passwords. To secure this transfer, you must configure TLS encryption between Cloudera Manager Server and all cluster hosts.
+
+	TLS encryption is also used to secure client connections to the Cloudera Manager Admin Interface, using HTTPS.
+
+	Cloudera Manager also supports TLS authentication. Without certificate authentication, a malicious user can add a host to Cloudera Manager by installing the Cloudera Manager Agent software and configuring it to communicate with Cloudera Manager Server. To prevent this, you must install certificates on each agent host and configure Cloudera Manager Server to trust those certificates.
+
+3. What is Keytool utility?
+
+	Use the keytool utility to generate a "Java keystore(JKS)" and "certificate signing request (CSR)". Replace the OU, O, L, ST, and C entries with the values for your environment. When prompted, use the same password for the keystore password and key password. Cloudera Manager does not support using different passwords for the key and keystore.
+	
+	$JAVA_HOME/bin/keytool -genkeypair -alias $(hostname -f) -keyalg RSA -keystore /opt/cloudera/security/pki/$(hostname -f).jks -keysize 2048 -dname "CN=$(hostname -f),OU=Engineering,O=Cloudera,L=Palo Alto,ST=California,C=US" -ext san=dns:$(hostname -f)
+
+	$JAVA_HOME/bin/keytool -certreq -alias $(hostname -f) -keystore /opt/cloudera/security/pki/$(hostname -f).jks -file /opt/cloudera/security/pki/$(hostname -f).csr -ext san=dns:$(hostname -f)
+
+	Copy the JDK cacerts file to jssecacerts as follows:
+	sudo cp $JAVA_HOME/jre/lib/security/cacerts $JAVA_HOME/jre/lib/security/jssecacerts
+
+	Note: The default password for the cacerts file is changeit. The same applies to the jssecacerts file if you copied it from the cacerts before changing the 	password. Cloudera recommends changing these passwords by running the following commands:
+
+	$JAVA_HOME/bin/keytool -storepasswd -keystore $JAVA_HOME/jre/lib/security/cacerts
+	$JAVA_HOME/bin/keytool -storepasswd -keystore $JAVA_HOME/jre/lib/security/jssecacerts
+
+4. Configuring TLS Encryption for Cloudera Manager
+	
+	4.1. Generate TLS Certificates
+	4.2. Configure TLS for the Cloudera Manager Admin Console
+	4.3. Configure TLS for Cloudera Manager Agents
+	4.4. Enable Server Certificate Verification on Cloudera Manager Agents
+	4.5. Configure Agent Certificate Authentication
+
+5. Configure TLS for the Cloudera Manager Admin Console
+	Step 1: Enable HTTPS for the Cloudera Manager Admin Console
+	Step 2: Specify SSL Truststore Properties for Cloudera Management Services
+	Step 3: Restart Cloudera Manager and Services
+
+6. Configure TLS for Cloudera Manager Agents
+	Step 1: Enable TLS Encryption for Agents in Cloudera Manager
+	Step 2: Enable TLS on Cloudera Manager Agent Hosts
+	Step 3: Restart Cloudera Manager Server and Agents
+	Step 4: Verify that the Cloudera Manager Server and Agents are Communicating
+
+7. Enable Server Certificate Verification on Cloudera Manager Agents
+	a. On each agent host (including the Cloudera Manager Server host, which also has an agent), open the /etc/cloudera-scm-agent/config.ini configuration file and set the use_tls parameter in the [Security] section as follows:
+use_tls=1
+
+	b. On each agent host (including the Cloudera Manager Server host), open the /etc/cloudera-scm-agent/config.ini configuration file, and then uncomment and set the following property:
+verify_cert_file=/opt/cloudera/security/pki/rootca.pem
+
+Alternatively, you can edit the config.ini file on one host, and then copy it to the other hosts because this file by default does not contain host-specific information. If you have modified properties such as listening_hostname or listening_ip address in config.ini, you must edit the file individually on each host.
+
+
+8. Configure Agent Certificate Authentication
+	Without certificate authentication, a malicious user can add a host to Cloudera Manager by installing the Cloudera Manager agent software and configuring it to communicate with Cloudera Manager Server. To prevent this, you must configure Cloudera Manager to trust the agent certificates.
+
+	Step 1: Export the Private Key to a File
+	Step 2: Create a Password File
+	Step 3: Configure the Agent to Use Private Keys and Certificates
+	Step 4: Enable Agent Certificate Authentication
+	Step 5: Restart Cloudera Manager Server and Agents
+	Step 6: Verify that Cloudera Manager Server and Agents are Communicating
+
+

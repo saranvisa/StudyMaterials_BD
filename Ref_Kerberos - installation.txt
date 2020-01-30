@@ -1,0 +1,670 @@
+Refer below folder & file for CDH Setup in AWS with Kerberos Installation
+
+C:\Users\sarkumar\Dropbox\Knowledge\Technical Knowledge\BigData\Session - 2\Cluster Setup - Cloudera CDH & CM\Ref_CDH_IN_AWS_sep_2016.txt
+
+The below content is part of "Ref_CDH_IN_AWS_sep_2016.txt"
+
+
+#########################################################
+#### KERBEROS INSTALLATION & CONFIGURUATION ####
+
+#########################################################
+#### PRE-REQUEST AES-256 ####
+
+# How to check we have AES-256 in our environment?
+# wget the file is getting some trouble, so use winscp
+# Get the java file windows: http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html
+# winscp to linux path "/home/kumar/jdk"
+# The following path might have old files, just replace it : /usr/java/jdk1.7***/jre/lib/security 
+
+cp /home/kumar/jdk/jce_policy-8/UnlimitedJCEPolicyJDK8/local_policy.jar /usr/java/jdk1.7.0_67-cloudera/jre/lib/security
+cp /home/kumar/jdk/jce_policy-8/UnlimitedJCEPolicyJDK8/US_export_policy.jar /usr/java/jdk1.7.0_67-cloudera/jre/lib/security
+cp /home/kumar/jdk/jce_policy-8/UnlimitedJCEPolicyJDK8/US_export_policy.jar /usr/java/jdk1.6.0_31/jre/lib/security
+cp /home/kumar/jdk/jce_policy-8/UnlimitedJCEPolicyJDK8/local_policy.jar /usr/java/jdk1.6.0_31/jre/lib/security
+
+#########################################################
+#### INSTALL KERBEROS ####
+https://github.com/daisukebe/krb-bootstrap/blob/master/configure_kdc_with_aes256_before_cm-wizard.txt
+
+# Install on MASTER NODE
+yum install krb5-server  
+yum install krb5-workstation, krb5-libs 
+
+yum install openldap-clients 
+
+## Install on ALL OTHER NODES
+yum install krb5-workstation, krb5-libs 
+
+
+#########################################################
+#### CONFIGURATION CHANGE ####
+
+2. Edit Configuration files
+# Edit following files
+vi /etc/krb5.conf
+
+# apply the following command
+:%s/example.com/AWS.COM
+:%s/EXAMPLE.COM/AWS.COM
+
+# Add the highlighted last 4 lines under libdefaults (for aes256-cts)
+[libdefaults]
+ default_realm = AWS.COM
+ dns_lookup_realm = false
+ dns_lookup_kdc = false
+ ticket_lifetime = 24h
+ renew_lifetime = 7d
+ forwardable = true
+ default_tgs_enctypes = aes256-cts
+ default_tkt_enctypes = aes256-cts
+ permitted_enctypes = aes256-cts
+ udp_preference_limit = 1
+
+# Make sure kdc and admin_server assigned to Public IP as mentioned below
+[realms]
+ AWS.COM = {
+  kdc = ec2-34-192-193-57.compute-1.amazonaws.com:88
+  admin_server = ec2-34-192-193-57.compute-1.amazonaws.com:749
+ }
+
+[domain_realm]
+ .compute-1.amazonaws.com = AWS.COM
+ compute-1.amazonaws.com = AWS.COM
+ 
+ ---------
+ /etc/krb5.conf
+ chown cloudera-scm:cloudera-scm /etc/krb5.conf
+ chmod 600 /etc/krb5.conf
+
+#########################################################
+/var/kerberos/krb5kdc/kdc.conf
+
+#After Change
+[realms]
+ AWS.COM = {
+  master_key_type = aes256-ctsi
+  max_life = 180d 0h 0m 0s
+  max_renewable_life = 7d 0h 0m 0s
+  acl_file = /var/kerberos/krb5kdc/kadm5.acl
+  dict_file = /usr/share/dict/words
+  admin_keytab = /var/kerberos/krb5kdc/kadm5.keytab
+  #supported_enctypes = aes256-cts:normal aes128-cts:normal des3-hmac-sha1:normal arcfour-hmac:normal des-hmac-sha1:normal des-cbc-md5:normal des-cbc-crc:normal
+  supported_enctypes = aes256-cts:normal
+  default_principal_flags = +renewable
+ }
+
+#########################################################
+/var/Kerberos/krb5kdc/kadm5.acl
+Replace EXAMPLE.COM with AWS.COM
+*/admin@AWS.COM *
+
+----------
+[root@ec2-34-194-173-26 krb5kdc]# chown cloudera-scm:cloudera-scm kadm5.acl
+[root@ec2-34-194-173-26 krb5kdc]# chown cloudera-scm:cloudera-scm principal.kadm5
+[root@ec2-34-194-173-26 krb5kdc]# chown cloudera-scm:cloudera-scm principal.kadm5.lock
+[root@ec2-34-194-173-26 krb5kdc]# chown cloudera-scm:cloudera-scm principal.ok
+[root@ec2-34-194-173-26 krb5kdc]# chown cloudera-scm:cloudera-scm principal
+[root@ec2-34-194-173-26 krb5kdc]# chown cloudera-scm:cloudera-scm kdc.conf
+
+#########################################################
+#### KERBEROS DB CREATION ####
+# Create Kerberos Database using kdb5_util (remember password hadoop1)
+# NOTE: if the command gets hung with 'Loading random data', see http://championofcyrodiil.blogspot.in/2014/01/increasing-entropy-in-vm-for-kerberos.html
+
+kdb5_util create –s –r AWS.COM
+	
+#########################################################	
+#### START THE SERVICE ####
+
+service kadmin start;service kadmin status;chkconfig kadmin on;chkconfig --list kadmin
+service krb5kdc start;service krb5kdc status;chkconfig krb5kdc on;chkconfig --list krb5kdc
+
+######################################################### 
+#### CREATE PRINCIPAL ####
+http://www.cloudera.com/documentation/enterprise/latest/topics/cm_sg_s3_cm_principal.html
+# Get or Create a Kerberos Principal for the Cloudera Manager Server
+# The Cloudera Manager Server must have the correct Kerberos principal that has privileges to create other accounts.
+
+>kadmin.local
+addprinc -randkey -pw hadoop1 cloudera-scm/admin@AWS.COM
+addprinc -randkey -pw hadoop1 root/admin@AWS.COM
+addprinc -randkey -pw hadoop1 hdfs/ec2-34-194-113-157.compute-1.amazonaws.com@AWS.COM
+addprinc -randkey -pw hadoop1 mapred/ec2-34-194-113-157.compute-1.amazonaws.com@AWS.COM
+addprinc -randkey -pw hadoop1 yarn/ec2-34-194-113-157.compute-1.amazonaws.com@AWS.COM
+addprinc -randkey -pw hadoop1 hive/ec2-34-194-113-157.compute-1.amazonaws.com@AWS.COM
+addprinc -randkey -pw hadoop1 HTTP/ec2-34-194-113-157.compute-1.amazonaws.com@AWS.COM
+addprinc -randkey -pw hadoop1 solr/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM    ## Check the Public IP before add the principal
+addprinc -pw hadoop1 hdfs@AWS.COM
+addprinc -pw hadoop1 hive@AWS.COM
+addprinc -pw hadoop1 root@AWS.COM
+addprinc -pw hadoop1 kumar@AWS.COM
+addprinc -pw hadoop1 kumar1@AWS.COM
+#########################################################
+
+# Add only child hosts
+addprinc -pw hadoop1 host/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM
+ 
+ 
+ 
+
+#########################################################
+#### ENABLE KERBEROS USING WIZARD ####
+
+#########################################################
+#### SETUP REALM in CM ####
+
+CM -> Administration -> Setting -> Kerberos -> Kerberos Security REALM = AWS.COM
+CM -> Administration -> Setting -> Kerberos -> KDC SERVER HOST = ec2-34-194-113-157.compute-1.amazonaws.com
+CM -> Administration -> Setting -> Kerberos -> Encryption type = aes256-cts
+
+#########################################################
+#### STOP ALL SERVICES ####
+# Before you enable security in CDH, you must stop all Hadoop daemons in your cluster and then change some configuration properties
+
+CM -> Cluster -> STOP
+
+CM -> Administration -> Setting -> Import KDC Account Manager Credentials
+
+#  case of failure, do the below change in /usr/share/cmf/bin/import_credentials.sh
+KRB5_CONFIG=/etc/cloudera-scm-server/cmf.keytab
+
+Enabling Kerberos
+
+######################################################### 
+#### ON HOLD #### Go to next step ##
+
+## ON HOLD # Not needed # Add HTTP, httpfs, hdfs
+# addprinc -randkey -pw hadoop1 HTTP/ec2-34-193-195-87.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 httpfs/ec2-34-193-195-87.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 hdfs/ec2-34-193-195-87.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 mapred/ec2-34-193-195-87.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 yarn/ec2-34-193-195-87.compute-1.amazonaws.com@AWS.COM
+
+## ON HOLD # Just for reference
+# To Add all the services **** DO NOT ADD THE BELOW SERVICES TO ENABLE KERBEROS USING wizard *** OTHERWISE IT WILL THROW BELOW ERROR
+# add_principal: Principal or policy already exists while creating "oozie/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM"
+# For Hadoop, the principals should be of the format username/fully.qualified.domain.name@YOUR-REALM.COM
+# username of an existing Unix account, such as hdfs or mapred
+# Note: Not all of them are valid username from "cat /etc/passwd | grep login". But it will help to identify the available username
+# Syntax: addprinc -randkey hdfs/fully.qualified.domain.name@YOUR-REALM.COM
+## To delete the existing principal: delprinc HTTP/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM
+
+## ON HOLD # Just for reference
+# addprinc -randkey -pw hadoop1 hive/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 hue/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 mapred/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 yarn/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 zookeeper/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM
+# addprinc -randkey -pw hadoop1 oozie/ec2-34-193-8-64.compute-1.amazonaws.com@AWS.COM
+*** Pending *** (sqoop is missing in K12)
+# sentry:x:488:487:Sentry:/var/lib/sentry:/sbin/nologin
+# spark:x:486:485:Spark:/var/lib/spark:/sbin/nologin
+# sqoop:x:485:484:Sqoop:/var/lib/sqoop:/sbin/nologin
+
+######################################################### 
+#### CREATE KEYTAB #####
+
+# Get or Create a Kerberos Principal and Keytab File for the Cloudera Manager Server
+http://www.cloudera.com/documentation/archive/manager/4-x/4-5-1/Configuring-Hadoop-Security-with-Cloudera-Manager/cmeechs_topic_4_5.html
+https://www.cloudera.com/documentation/enterprise/5-3-x/topics/cdh_sg_kerberos_prin_keytab_deploy.html
+
+# Create the Cloudera Manager Server cmf.keytab file:
+# NOTE: The Cloudera Manager Server keytab file must be named cmf.keytab because that name is hard-coded in Cloudera Manager.
+kadmin.local:
+ xst -norandkey -k /home/kumar/cmf.keytab cloudera-scm/admin@AWS.COM
+
+# Create the hdfs.keytab files:
+kadmin.local: 
+  xst -norandkey -k /home/kumar/hdfs.keytab hdfs/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM HTTP/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM
+
+# Create the mapred.keytab files:
+kadmin.local: 
+  xst -norandkey -k /home/kumar/mapred.keytab mapred/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM HTTP/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM
+
+# Create the yarn.keytab files:
+kadmin.local: 
+  xst -norandkey -k /home/kumar/yarn.keytab yarn/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM HTTP/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM
+
+# Create the hive.keytab files:
+kadmin.local: 
+  xst -norandkey -k /home/kumar/hive.keytab yarn/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM HTTP/ec2-34-194-173-26.compute-1.amazonaws.com@AWS.COM
+
+#########################################################
+#### DISPLAY THE KEYTAB #### 
+
+# Use klist to display the keytab file entries
+$
+klist -e -k -t /home/kumar/cmf.keytab
+klist -e -k -t /home/kumar/hdfs.keytab
+klist -e -k -t /home/kumar/mapred.keytab
+klist -e -k -t /home/kumar/yarn.keytab
+klist -e -k -t /home/kumar/hive.keytab
+
+# Use the ktutil to display the keytab as follows
+ktutil: read_kt hdfs.keytab   
+ktutil: list
+ktutil: wkt /etc/cloudera-scm-server/cmf.keytab
+ktutil: read_kt hdfs.keytab   
+ktutil: list
+ktutil: wkt /etc/cloudera-scm-server/hdfs.keytab
+ktutil: wkt /etc/hadoop/conf/hdfs.keytab
+
+ktutil: read_kt mapred.keytab   
+ktutil: list
+ktutil: wkt /etc/cloudera-scm-server/mapred.keytab
+ktutil: wkt /etc/hadoop/conf/mapred.keytab
+
+ktutil: read_kt yarn.keytab   
+ktutil: list
+ktutil: wkt /etc/cloudera-scm-server/yarn.keytab
+ktutil: wkt /etc/hadoop/conf/yarn.keytab
+
+ktutil: read_kt hive.keytab   
+ktutil: list
+ktutil: wkt /etc/cloudera-scm-server/hive.keytab
+ktutil: wkt /etc/hadoop/conf/hive.keytab
+
+cd etc/cloudera-scm-server
+sudo chown cloudera-scm:cloudera-scm /etc/cloudera-scm-server/cmf.keytab 
+sudo chown cloudera-scm:cloudera-scm /etc/cloudera-scm-server/hdfs.keytab
+sudo chown cloudera-scm:cloudera-scm /etc/cloudera-scm-server/mapred.keytab
+sudo chown cloudera-scm:cloudera-scm /etc/cloudera-scm-server/yarn.keytab
+sudo chown cloudera-scm:cloudera-scm /etc/cloudera-scm-server/hive.keytab
+sudo chmod 600 /etc/cloudera-scm-server/*.keytab
+
+cd /etc/hadoop/conf
+sudo chown hdfs:hadoop /etc/hadoop/conf/hdfs.keytab
+sudo chown mapred:hadoop /etc/hadoop/conf/mapred.keytab
+sudo chown yarn:hadoop /etc/hadoop/conf/yarn.keytab
+sudo chown hive:hadoop /etc/hadoop/conf/hive.keytab
+sudo chmod 400 /etc/hadoop/conf/*.keytab
+
+
+
+
+######################################################### --old
+#### DEPLOY THE KEYTAB ####
+
+## Deploying the Cloudera Manager Server Keytab
+http://www.cloudera.com/documentation/archive/manager/4-x/4-5-1/Configuring-Hadoop-Security-with-Cloudera-Manager/cmeechs_topic_4_6.html
+
+# Move the cmf.keytab file to the /etc/cloudera-scm-server/ directory on the host machine where you are running the Cloudera Manager Server.
+mv cmf.keytab hdfs.keytab mapred.keytab yarn.keytab hive.keytab /etc/cloudera-scm-server/
+
+
+(or) use the kutil to move cmf.keytab
+# Use the ktutil to display the keytab as follows
+ktutil: read_kt hdfs.keytab   
+ktutil: list
+ktutil: wkt /etc/cloudera-scm-server/cmf.keytab
+
+
+# Make sure that the cmf.keytab file is only readable by the Cloudera Manager Server user account cloudera-scm.
+sudo chown cloudera-scm:cloudera-scm /etc/cloudera-scm-server/cmf.keytab 
+sudo chown cloudera-scm:cloudera-scm /etc/cloudera-scm-server/hdfs.keytab
+sudo chown cloudera-scm:cloudera-scm /etc/cloudera-scm-server/mapred.keytab
+sudo chown cloudera-scm:cloudera-scm /etc/cloudera-scm-server/yarn.keytab
+sudo chown cloudera-scm:cloudera-scm /etc/cloudera-scm-server/hive.keytab
+sudo chmod 600 /etc/cloudera-scm-server/*.keytab
+
+# Add the Cloudera Manager Server principal (cloudera-scm/admin@AWS.COM) to a text file named cmf.principal and store the cmf.principal file in the 
+# /etc/cloudera-scm-server/ directory on the host machine where you are running the Cloudera Manager Server
+# Generate "cmf.principal.tmp" do all the changes then change the name to "cmf.principal" as follows
+vi /etc/cloudera-scm-server/cmf.principal.tmp
+cloudera-scm/admin@AWS.COM
+sudo chmod 0600 /etc/cloudera-scm-server/cmf.principal.tmp
+sudo chown cloudera-scm:cloudera-scm /etc/cloudera-scm-server/cmf.principal.tmp
+mv /etc/cloudera-scm-server/cmf.principal.tmp /etc/cloudera-scm-server/cmf.principal
+# As needed you can kinit to cloudera-scm using below command
+kinit -k -t /etc/cloudera-scm-server/cmf.keytab cloudera-scm/admin@AWS.COM
+
+## On every node in the cluster, repeat the following steps to deploy the hdfs.keytab, mapred.keytab and yarn.keytab files
+# On each respective machine, the HTTP principal in the yarn keytab file will be the same as the HTTP principal in the hdfs and mapred keytab files.
+# Use mv command or ktutil as follows
+sudo mv hdfs.keytab mapred.keytab yarn.keytab hive.keytab /etc/hadoop/conf/
+(or) 
+ktutil
+Ktutil: list
+Ktutil: rkt /home/kumar/hive.keytab 
+Kttuil: list
+ktutil: wkt /etc/hadoop/conf/hive.keytab
+
+# Make sure that the hdfs.keytab, mapred.keytab, yarn.keytab, hive.keytab files are only readable by the hdfs, mapred, yarn, hive users respectively
+sudo chown hdfs:hadoop /etc/hadoop/conf/hdfs.keytab
+sudo chown mapred:hadoop /etc/hadoop/conf/mapred.keytab
+sudo chown yarn:hadoop /etc/hadoop/conf/yarn.keytab
+sudo chown hive:hadoop /etc/hadoop/conf/hive.keytab
+sudo chmod 400 /etc/hadoop/conf/*.keytab
+
+#########################################################
+#### ENABLE KERBEROS USING WIZARD ####
+
+#########################################################
+#### SETUP REALM in CM ####
+
+CM -> Administration -> Setting -> Kerberos -> Kerberos Security REALM = AWS.COM
+CM -> Administration -> Setting -> Kerberos -> KDC SERVER HOST = ec2-34-194-113-157.compute-1.amazonaws.com
+CM -> Administration -> Setting -> Kerberos -> Encryption type = aes256-cts
+
+#########################################################
+#### STOP ALL SERVICES ####
+# Before you enable security in CDH, you must stop all Hadoop daemons in your cluster and then change some configuration properties
+
+CM -> Cluster -> STOP
+
+CM -> Administration -> Setting -> Import KDC Account Manager Credentials
+
+#  case of failure, do the below change in /usr/share/cmf/bin/import_credentials.sh
+KRB5_CONFIG=/etc/cloudera-scm-server/cmf.keytab
+
+Enabling Kerberos
+
+#########################################################
+#### Create the HDFS Superuser ####
+
+# To be able to create home directories for users, you will need access to the HDFS superuser account
+
+1. Go to the Cloudera Manager Admin Console and navigate to the HDFS service.
+2. Click the Configuration tab.
+3. Select Scope > HDFS (Service-Wide).
+4. Select Category > Security.
+5. Locate the Superuser Group property and change the value to the appropriate group name for your environment. For example, <hadoop>.
+6. Click Save Changes to commit the changes.
+7. Restart the HDFS service.
+To enable your access to the superuser account now that Kerberos is enabled, you must now create a Kerberos principal or an Active Directory user whose first component is <hadoop>:
+
+#########################################################
+#### KERBEROS TICKET RENEWER ####
+# Oozie and Hue require that the realm support renewable tickets
+# Below is for only HUE
+kadmin.local: modprinc -maxrenewlife 90day krbtgt/AWS.COM
+kadmin.local: modprinc -maxrenewlife 90day +allow_renewable hue/ec2-34-194-113-157.compute-1.amazonaws.com@AWS.COM
+
+
+#########################################################
+----------- Enable Kerberos: Part 2 (using Wizard)
+
+
+
+# Get or Create a Kerberos Principal for the Cloudera Manager Server
+# If you have enabled YARN Resource Manager HA in your non-secure cluster, you should clear the StateStore znode in ZooKeeper before enabling Kerberos. 
+kadmin:  addprinc -pw <Password> cloudera-scm/admin@YOUR-LOCAL-REALM.COM
+
+## Before enable Kerberos 
+# Cloudera Manager -> Administration -> Security -> Kerberos Credentials -> Configuration
+a. Update REALM.COM
+b. Update Host
+c. Update Encryption Type
+d. CM -> Security -> Enable Kerberos
+e. Optional: Manage krb5.conf through Cloudera Manager (enable)-allows you to choose whether Cloudera Manager should deploy the krb5.conf on your cluster or not. If left unchecked, you must ensure that the krb5.conf is deployed on all hosts in the cluster, including the Cloudera Manager Server's host
+# Cloudera Manager -> Administration -> Security -> Kerberos Credentials -> Import Kerberos Account manager Credentials
+f. CM -> Security -> Kerberos Credentials -> Generate Missing Credentials
+g. Optional: It will ask for Import Kerberos Account Manager credentials: Username: root/admin, pwd: hadoop1, realm: AWS.COM
+
+
+
+#########################################################
+#### ADD SENTRY SERVICE ####
+
+# The Sentry service only uses HadoopUserGroup mappings. 
+
+http://www.cloudera.com/documentation/enterprise/5-7-x/topics/cdh_sg_sentry.html#xd_583c10bfdbd326ba--7f25092b-13fba2465e5--7f93
+
+
+#########################################################
+#### Pre-request ####
+# Create a DB, user in Mysql.
+create database sentry;create user 'sentry' identified by 'Hadoop1@'; grant all on sentry.* to sentry; flush privileges;
+
+# Cloudera Manager
+CM -> Add services -> Sentry -> Choose the node for Sentry Server & Gateway -> Choose the Customized Db (Mysql: port# 3306) -> 
+
+#########################################################
+#### Enable Sentry for Hue ####
+Cloudera Manager -> Configuration -> Choose Sentry -> restart Hue
+
+
+######################################################### -- old method
+#### CREATE POLICY FILE - Sample 1 
+## there is no sentry-provider.ini file to edit anymore ####
+http://www.cloudera.com/documentation/enterprise/5-7-x/topics/cdh_sg_sentry.html#xd_583c10bfdbd326ba--7f25092b-13fba2465e5--7f93
+https://vimeo.com/89523907
+https://blogs.apache.org/sentry/entry/getting_started
+http://gethue.com/apache-sentry-made-easy-with-the-new-hue-security-app/
+http://www.yourtechchick.com/hadoop/no-databases-available-permissions-missing-error-hive-sentry/
+
+## A single global policy file can be used to control access to an entire HiveServer2 instance, and multiple dependent per database policy files can be linked to the global one
+# There are usually three sections in the global policy file
+# A [groups] section that provides group-to-role mapping
+# A [roles] section that provides role-to-privileges mapping
+# A [databases] (optional) section that provides database-to-per-database policy file mapping. This allows for maintaining per-database privileges separately.
+
+# Global policy file:
+[groups]
+admin_group = admin_role
+dep1_admin = uri_role
+
+[roles]
+admin_role = server=server1
+uri_role = hdfs:///ha-nn-uri/data
+
+[databases]
+db1 = hdfs://ha-nn-uri/user/hive/sentry/db1.ini
+
+######################################################### -- old method
+#### CREATE POLICY FILE - Sample 2 - there is no sentry-provider.ini file to edit anymore ####
+>vi sentry-provider.ini
+[groups]
+management = manager_role
+analyst = analyst_role, junior_analyst_role
+jranalyst = junior_analyst_role
+admin = admin_role
+
+[roles]
+manager_role = server=server1->db=default
+analyst_role = server=server1->db=default->table=analystl_table->action=select
+junior_analyst_role=server=server1->db=default->table=jranalyst1_table->action=select
+
+# Implies everything on server1
+admin_role=server=server1
+
+######################################################### -- old method
+#### PLACE POLICY FILE IN HDFS ####
+>hadoop fs -put sentry-provider.ini /user/hive/sentry/sentry-provider.ini
+>hadoop fs -chgrp hive /user/hive/sentry/sentry-provider.ini
+>hadoop fs -ls /user/hive/sentry/sentry-provider.ini
+>hadoop fs -chmod 640 /user/hive/sentry/sentry-provider.ini
+>hadoop fs -ls /user/hive/sentry/sentry-provider.ini
+
+#########################################################
+#### UPDATE HUE.INI ####
+## To have Hue point to a Sentry service and another host, modify these hue.ini properties:
+# Hue will also automatically pick up the server name of HiveServer2 from the sentry-site.xml file of /etc/hive/conf
+
+[libsentry]
+  # Hostname or IP of server.
+  hostname=localhost
+ 
+  # Port the sentry service is running on.
+  port=8038
+ 
+  # Sentry configuration directory, where sentry-site.xml is located.
+  sentry_conf_dir=/etc/sentry/conf
+
+#########################################################
+#### EDIT ROLES/PRIVILEGES IN HUE ####
+  
+# To be able to edit roles and privileges in Hue, the logged-in Hue user needs to belong to a group in Hue that is also an admin group in Sentry 
+# (whatever UserGroupMapping Sentry is using, the corresponding groups must exist in Hue or need to be entered manually). 
+# For example, our ‘hive’ user belongs to a ‘hive’ group in Hue and also to a ‘hive’ group in Sentry:
+# Add the Hive, Impala and Hue groups to Sentry’s admin groups. 
+# If an end user is in one of these admin groups, that user has administrative privileges on the Sentry Server
+
+<property>
+  <name>sentry.service.admin.group</name>
+  <value>hive,impala,hue</value>
+ </property>
+   
+#########################################################
+#### SAMPLE USERS ####
+
+# Make sure to sync Linux users/groups with Hue
+hive (admin) belongs to the hive group
+user1_1 belongs to the user_group1 group
+user2_1 belongs to the user_group2 group
+   
+#########################################################
+#### Make sure HUE is allowed to connect to Sentry ####
+# If using Kerberos, make sure ‘hue’ is allowed to connect to Sentry in /etc/sentry/conf/sentry-site.xml:
+<property>
+    <name>sentry.service.allow.connect</name>
+    <value>impala,hive,solr,hue</value>
+</property>   
+   
+#########################################################   
+# Note: In Sentry 1.5, you will need to specify a ‘entry.store.jdbc.password’ property in the sentry-site.xml, if not you will get:
+
+Caused by: org.apache.sentry.provider.db.service.thrift.SentryConfigurationException: Error reading sentry.store.jdbc.password
+   
+#########################################################
+#### HIVE WAREHOUSE ACCESS ####
+
+# This will make sure only Hive and Impala can access the files in /user/hive/warehouse
+>hadoop fs -chown -R hive:hive /user/hive/warehouse
+
+# This will make sure only Hive user and group can only do the changes in /user/hive/warehouse
+>hadoop fs -chmod -R 770 /user/hive/warehouse
+
+
+#########################################################
+#### ENABLE SENTRY IN HIVE via CM ####
+
+# It should be done before enable sentry for Impala
+Cloudera Manager -> hive -> Configuration -> Hive(Service-wide) -> Enable Sentry Authorization using Policy Files -> true (check)
+Cloudera Manager -> hive -> Configuration -> Hive(Service-wide) -> Sentry Service -> Sentry
+Cloudera Manager -> hive -> Configuration -> HiveServer2 -> HiveServer2 Enable Impersonation -> false (uncheck)
+# Restart the Hive service now
+
+#########################################################
+#### ENABLE SENTRY IN IMPALA via CM ####
+
+Cloudera manager -> Impala -> Configuration -> Imapal (service-wide) -> Enable Sentry Authorization -> trun (check)
+# Restart the Impala service now
+
+#########################################################
+
+
+#########################################################
+------------- Enable Sentry 
+http://www.cloudera.com/documentation/enterprise/latest/topics/sg_sentry_service_config.html
+
+# Enabling the Sentry Service Using Cloudera Manager
+a. Before Enabling the Sentry Service
+b. Enabling the Sentry Service for Hive
+
+# Before Enabling the Sentry Service
+
+Note: 
+a. If you are going to enable HDFS/Sentry synchronization, you do not need to perform the following step to explicitly set permissions for the Hive warehouse directory. 
+b. HDFS/Sentry synchronization is on hold in our case
+
+
+# All files and subdirectories should be owned by hive:hive (/user/hive/warehouse)
+1: If you have enabled Kerberos on your cluster, you must kinit as the hdfs user before you set permissions. For example:
+	
+	$ sudo -u hdfs kinit -kt <hdfs.keytab> hdfs # If this command is NOT working then try the below steps
+	## When you enabled Kerberos for the HDFS service in Step 9, you lost access to the HDFS super user account via sudo -u hdfs commands. To enable your access to the HDFS super user account now that Kerberos is enabled, you must create a Kerberos principal whose first component is hdfs
+	$ kadmin:  addprinc hdfs@AWS.COM
+  	$ kinit hdfs@AWS.COM
+	$ klist -e -k -t /etc/hadoop/conf/hdfs.keytab
+	$ sudo -u hdfs kinit -kt /etc/hadoop/conf/hdfs.keytab hdfs@AWS.COM
+	
+	$ sudo -u hdfs hdfs dfs -chmod -R 771 /user/hive/warehouse
+	$ sudo -u hdfs hdfs dfs -chown -R hive:hive /user/hive/warehouse
+	# Make sure  hive.warehouse.subdir.inherit.perms is true. So that sub directory will automatically use the above chown
+	
+	sudo -u hdfs kinit -kt /etc/hadoop/conf/hdfs.keytab hdfs@AWS.COM ## you must kinit as the hdfs user before you set permissions.
+	hadoop fs -chmod -R 771 /user/hive/warehouse
+	hadoop fs -chown -R hive:hive /user/hive/warehouse
+
+1.1: Ignore this step.. just for reference:   The Hive warehouse directory (/user/hive/warehouse or any path you specify as hive.metastore.warehouse.dir in your hive-site.xml) must be owned by the Hive user and group.
+
+make sure 771 on all subdirectories (for example, /user/hive/warehouse/mysubdir) ***
+$ sudo -u hdfs kinit -kt <hdfs.keytab> hdfs
+$ sudo -u hdfs hdfs dfs -chmod -R 771 /user/hive/warehouse
+$ sudo -u hdfs hdfs dfs -chown -R hive:hive /user/hive/warehouse
+
+hdfs dfs -chown -R hive:hive /user/hive/warehouse/prod.db
+
+## Note that when you update the default Hive warehouse, previously created tables will not be moved over automatically. Therefore, tables created before the update will remain at /user/hive/warehouse/<old_table>. However, after the update, any new tables created in the default location will be found at /data/<new_table>.
+
+---------- create a user called HIVE (it is mandatory)
+
+
+-----------
+
+Test: 
+
+insert into prod.test1 values (10000, 'Bob', 2016, 11);
+
+---------------
+
+Hive Impersonation is enabled for Hive Server2 role 'HiveServer2 (ec2-34-193-8-64)
+
+HiveServer2 Enable Impersonation
+hive.server2.enable.impersonation, hive.server2.enable.doAs
+
+----------
+
+Disable the existing Sentry policy file for any Hive, Impala, or Solr services on the cluster. To do this:
+Go to the Hive, Impala, or Solr service.
+Click the Configuration tab.
+Select Scope > Service Name (Service-Wide).
+Select Category > Policy File Based Sentry.
+Clear Enable Sentry Authorization using Policy Files.
+
+-------Securing the Hive Metastore
+It's important that the Hive metastore be secured. If you want to override the Kerberos prerequisite for the Hive metastore, set the sentry.hive.testing.mode property to true to allow Sentry to work with weaker authentication mechanisms. Add the following property to the HiveServer2 and Hive metastore's sentry-site.xml:
+<property>
+  <name>sentry.hive.testing.mode</name>
+  <value>true</value>
+</property>
+Impala does not require this flag to be set.
+
+---Securing the Hive Metastore
+--- hive -> configuration -> sentry
+http://www.cloudera.com/documentation/enterprise/latest/topics/sg_sentry_service_config.html#concept_wjm_qxm_vq
+
+Hive Service Advanced Configuration Snippet (Safety Valve) for sentry-site.xml
+
+Add the following value
+<property>
+  <name>sentry.hive.testing.mode</name>
+  <value>true</value>
+</property>
+
+----Hive Metastore Server Security Configuration
+----Hive -> configuration
+http://www.cloudera.com/documentation/enterprise/latest/topics/cdh_sg_hive_metastore_security.html
+
+Hive Service Advanced Configuration Snippet (Safety Valve) for hive-site.xml
+
+Add the following value
+<property>
+  <name>hive.metastore.sasl.enabled</name>
+  <value>true</value>
+  <description>If true, the metastore thrift interface will be secured with SASL. Clients must authenticate with Kerberos.</description>
+</property>
+
+# Note: make sure to keep the /etc/hive/conf/hive.keytab file ready 
+<property>
+  <name>hive.metastore.kerberos.keytab.file</name>
+  <value>/etc/hive/conf/hive.keytab</value>
+  <description>The path to the Kerberos Keytab file containing the metastore thrift server's service principal.</description>
+</property>
+
+<property>
+  <name>hive.metastore.kerberos.principal</name>
+  <value>hive/_HOST@YOUR-REALM.COM</value>
+  <description>The service principal for the metastore thrift server. The special string _HOST will be replaced automatically with the correct host name.</description>
+</property>
