@@ -1,3 +1,51 @@
+a. Configure the Kerberos Server
+	1. Key Distribution Center (KDC)
+		a. Authentication Server (based on principle or keytab, then provides ticket for users)
+		b. Ticket Granting Server
+	2. Config file name : 	/var/kerberos/krb5kdc/kdc.conf
+
+b. Once the server is configured then configure the client which points to KDC
+	1. Client 
+	2. Config file name : /etc/krb5.conf 
+
+c. Things to know about Kerberos
+	1. KRB5 - Kerberos version 5
+	2. KRB5KDC - Which contains both Authentication Server and Ticket Granting Server for Authorization. 
+	3. REALM - A Kerberos realm is the domain over which a Kerberos authentication server has the authority to authenticate a user, host or service. A realm name is often, but not always the upper case version of the name of the DNS domain over which it presides.
+	3.1. REALM Active Directory - A Kerberos realm is the domain over which a Kerberos authentication server has the authority to authenticate a user, host or service. A realm name is often, but not always the upper case version of the name of the DNS domain over which it presides
+
+	4. Kadmin - used for maintenance of Kerberos principals, password policies and service key tables (keytabs)
+	5. Clients - Which can authenticate using KDC 
+	
+
+d. Add principals
+	1. User
+	2. Hosts
+	3. Services
+
+e. List of services to start
+	On Server
+	a. start service krb5kdc
+	b. start service kadmin
+
+	On Client
+	a. start service 
+
+f. Installation
+	On Server
+	a. sudo yum install -y krb5-server krb5-workstation 	## To install both server and client components
+
+	On Client
+	a. sudo yum install -y krb5-workstation 		## To install only client component
+
+g. Verify the service status
+	On Server
+	a. sudo systemctrl status krb5kdc
+
+	On Client
+
+h. 
+================================================================================
 Refer below folder & file for CDH Setup in AWS with Kerberos Installation
 
 C:\Users\sarkumar\Dropbox\Knowledge\Technical Knowledge\BigData\Session - 2\Cluster Setup - Cloudera CDH & CM\Ref_CDH_IN_AWS_sep_2016.txt
